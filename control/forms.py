@@ -63,5 +63,3 @@ class OperacionForm(EstiloForm):
     class Meta:
         model = TipoOperacion
         fields = ['nombre', 'codigo_externo', 'requiere_fecha_final', 'grupo_especial', 'activo']
-
-

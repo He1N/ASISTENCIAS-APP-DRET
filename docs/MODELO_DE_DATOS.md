@@ -1,4 +1,4 @@
-# Modelo de datos — fases 1 y 2
+# Modelo de datos — fases 1, 2 y 3
 
 Trabajador: nombre obligatorio no único, DNI textual nullable, área opcional,
 activo y timestamps. Índice normalizado auxiliar sin modificar el nombre original.
@@ -39,3 +39,27 @@ su HistorialCambio. Los campos de versión/autorizaciones son solo de formulario
 SQLite no implementa bloqueo de filas: antes de producción se debe probar el
 comportamiento con el motor definitivo. Las escrituras por Admin conservan el
 comportamiento de fase 1; su formulario no usa la versión de las pantallas web.
+
+## Justificaciones y consultas — fase 3
+
+No se añaden campos ni migraciones. El cambio de modelo es de comportamiento:
+si falta un corte verificable en un periodo cerrado/procesado, el plazo es Sin
+determinar, en lugar de marcarlo ordinario. Los importados conservan plazo incierto.
+
+Los ModelForms reutilizan validaciones de modelo, controles de fechas/rango y
+catálogos existentes. La edición guarda motivo, versión y actor en transacción.
+`HistorialCambio.cambios` añade motivo_excepcion/motivo_edicion como contexto con
+valores previos/nuevos. La anulación usa los campos ya existentes; no borra datos.
+Los campos de captura, usuario y fuente no están expuestos al POST del formulario.
+
+Los filtros/autocompletados usan Django ORM, índice normalizado auxiliar y
+`select_related`; no dependen de extensiones PostgreSQL ni SQL específico de SQLite.
+El orden de Consultas indica NULLS LAST explícitamente para igualar ambos motores.
+SQLite se ha probado; PostgreSQL no se ha ejecutado todavía ni se configura Neon.
+En un despliegue futuro deberán validarse el controlador, configuración y migraciones
+bajo PostgreSQL antes de introducir datos institucionales.
+
+Roles fase 3: Operador obtiene view/add/change_justificacion; Consulta obtiene
+view_justificacion. Administrador conserva todos los permisos de control. No se
+conceden permisos de Excel ni anulación a Operador por defecto. Ejecutar
+preparar_roles tras actualizar; no se añade una migración que reasigne cuentas.

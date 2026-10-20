@@ -1,0 +1,28 @@
+{% extends 'control/base.html' %}{% load static %}
+{% block title %}{{ encabezado }}{% endblock %}
+{% block content %}
+<a href="{{ url_cancelar }}">Volver</a><h1>{{ encabezado }}</h1>
+{% if perms.control.add_trabajador %}<p><a href="{% url 'maestro_nuevo' tipo='trabajadores' %}" target="_blank" rel="noopener">Nuevo trabajador (otra pestaña)</a></p>{% endif %}
+<div id="avisos-periodo" aria-live="polite">{% for aviso in avisos %}<p class="mensaje">{{ aviso }}</p>{% endfor %}</div>
+<form method="post" class="formulario" novalidate data-form-justificacion>
+  {% csrf_token %}
+  {% if form.errors %}<div class="resumen-error" role="alert"><p>No se guardaron los cambios. Revise los campos indicados.</p>{{ form.non_field_errors }}{% for field in form %}{% if field.errors and not field.is_hidden %}<a href="#{{ field.id_for_label }}">{{ field.label }}</a>{% endif %}{% endfor %}</div>{% endif %}
+  {% for field in form %}
+    {% if field.is_hidden %}{{ field }}{{ field.errors }}{% else %}
+    <div class="campo {% if field.errors %}con-error{% endif %}">
+      <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="obligatorio">(obligatorio)</span>{% endif %}</label>
+      {{ field }}{% if field.help_text %}<p class="ayuda" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</p>{% endif %}{{ field.errors }}
+    </div>{% endif %}
+  {% endfor %}
+  <p class="ayuda" id="regla-fecha-final" aria-live="polite">La fecha final se valida según la operación seleccionada.</p>
+  <div class="acciones">
+    <button type="submit" name="accion" value="guardar">Guardar</button>
+    <button type="submit" name="accion" value="otro" class="secundario">Guardar y registrar otro</button>
+    <a href="{{ url_cancelar }}">Cancelar</a>
+  </div>
+  <noscript><p>Para actualizar las opciones, escriba un fragmento en los buscadores y pulse Actualizar opciones. Los datos ingresados se conservan.</p><button type="submit" name="accion" value="buscar" formnovalidate>Actualizar opciones</button></noscript>
+</form>
+{{ periodos|json_script:'estados-periodos' }}
+{{ operacion_inicial|json_script:'operacion-inicial' }}
+<script src="{% static 'control/justificaciones.js' %}" defer></script>
+{% endblock %}

@@ -9,6 +9,8 @@
 <div class="estructura {% if not user.is_authenticated %}acceso{% endif %}">
 {% if user.is_authenticated %}<aside><nav aria-label="Navegación principal">
 <details open><summary>Menú</summary><div class="enlaces">
+{% if perms.control.view_justificacion %}<a href="{% url 'consultas' %}" {% if tipo == 'justificaciones' %}aria-current="page"{% endif %}>Consultas</a>{% endif %}
+{% if perms.control.add_justificacion %}<a href="{% url 'justificacion_nueva' %}">Nueva justificación</a>{% endif %}
 {% if perms.control.view_trabajador %}<a href="{% url 'maestro_lista' tipo='trabajadores' %}" {% if tipo == 'trabajadores' %}aria-current="page"{% endif %}>Trabajadores</a>{% endif %}
 {% if perms.control.view_tipodocumento or perms.control.view_tipooperacion %}<span class="grupo">Catálogos</span>{% endif %}
 {% if perms.control.view_tipodocumento %}<a href="{% url 'maestro_lista' tipo='documentos' %}" {% if tipo == 'documentos' %}aria-current="page"{% endif %}>Tipos de documento</a>{% endif %}

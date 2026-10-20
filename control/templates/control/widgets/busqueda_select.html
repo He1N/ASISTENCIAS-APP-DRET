@@ -1,0 +1,6 @@
+<div class="autocompletado" data-autocompletado data-endpoint="{{ endpoint }}" data-modo="{{ modo }}">
+  <label class="solo-lector" for="{{ widget.attrs.id }}_buscar">Buscar {{ nombre_busqueda }}</label>
+  <input type="search" id="{{ widget.attrs.id }}_buscar" name="{{ widget.name }}_buscar" value="{{ termino }}" maxlength="250" autocomplete="off" placeholder="Buscar por fragmento de nombre o código" aria-describedby="{{ widget.attrs.id }}_estado">
+  {% include 'django/forms/widgets/select.html' %}
+  <span class="ayuda" id="{{ widget.attrs.id }}_estado" aria-live="polite">Hasta 20 coincidencias. Seleccione una ficha por su identificador.</span>
+</div>

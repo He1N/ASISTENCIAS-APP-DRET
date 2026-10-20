@@ -354,3 +354,19 @@ dd {
     margin:1rem auto;
   }
 }
+
+.consultas-filtros { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); align-items:start; }
+.consultas-filtros>div:first-child { min-width:0; }
+.autocompletado { display:grid; gap:.5rem; }
+.autocompletado .ayuda { display:block; }
+.cambio { margin:1rem 0; }
+@media(max-width:760px) { .consultas-filtros { grid-template-columns:1fr; } }
+
+.filtros-avanzados { grid-column:1/-1; }
+.rejilla-filtros { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1rem; padding-top:1rem; }
+.consultas-tabla th, .consultas-tabla td { min-width:140px; }
+.consultas-tabla th:first-child, .consultas-tabla td:first-child { min-width:160px; }
+.consultas-tabla th:nth-child(2), .consultas-tabla td:nth-child(2),
+.consultas-tabla th:nth-child(4), .consultas-tabla td:nth-child(4) { min-width:200px; }
+.consultas-tabla th:last-child, .consultas-tabla td:last-child { min-width:90px; }
+@media(max-width:760px) { .rejilla-filtros { grid-template-columns:1fr; } }

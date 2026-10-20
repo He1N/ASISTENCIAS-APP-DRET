@@ -1,0 +1,13 @@
+{% extends 'control/base.html' %}
+{% block title %}Justificación {{ objeto.pk }}{% endblock %}
+{% block content %}
+<a href="{{ url_lista }}">Volver a consultas</a>
+<div class="cabecera"><h1>Justificación {{ objeto.pk }}</h1><div class="acciones">
+{% if not objeto.anulada %}{% if perms.control.change_justificacion %}<a class="boton" href="{{ url_editar }}">Editar</a>{% endif %}{% if perms.control.anular_justificacion %}<a href="{{ url_anular }}">Anular</a>{% endif %}{% endif %}
+</div></div>
+{% for aviso in avisos_horas %}<p class="mensaje">{{ aviso }}</p>{% endfor %}
+<dl class="ficha">{% for label, value in datos %}<div><dt>{{ label }}</dt><dd>{{ value|linebreaksbr }}</dd></div>{% endfor %}</dl>
+{% if objeto.tipo_operacion.grupo_especial == 'VACACIONES' and objeto.duracion %}<p>Duración calendaria informativa: {{ objeto.duracion }} día{{ objeto.duracion|pluralize:'s' }}. No representa saldo ni descuento administrativo.</p>{% endif %}
+{% if auditoria != None %}<h2>Historial de cambios</h2>
+{% for cambio in auditoria %}<details class="cambio"><summary>{{ cambio.fecha|date:'d/m/Y H:i' }} · {{ cambio.autor }} · {{ cambio.accion }}</summary><dl class="ficha">{% for campo, valores in cambio.cambios.items %}<div><dt>{{ campo }}</dt><dd>Antes: {{ valores.antes|default_if_none:'—' }}<br>Después: {{ valores.despues|default_if_none:'—' }}</dd></div>{% endfor %}</dl></details>{% empty %}<p>No hay cambios registrados.</p>{% endfor %}{% endif %}
+{% endblock %}

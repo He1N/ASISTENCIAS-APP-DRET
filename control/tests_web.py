@@ -48,7 +48,7 @@ class GestionWebTests(TestCase):
     def test_login_sin_staff_y_logout_solo_post(self):
         response = self.client.post(reverse('login'), {'username':'operador','password':'clave-ficticia-de-pruebas'})
         self.assertRedirects(response, reverse('inicio'), fetch_redirect_response=False)
-        self.assertRedirects(self.client.get(reverse('inicio')), self.url('lista'))
+        self.assertRedirects(self.client.get(reverse('inicio')), reverse('consultas'))
         self.assertEqual(self.client.get(reverse('logout')).status_code,405)
         self.assertRedirects(self.client.post(reverse('logout')), reverse('login'))
         self.assertNotIn('_auth_user_id', self.client.session)
@@ -191,7 +191,10 @@ class GestionWebTests(TestCase):
     def test_historial_relacionado_restringido_y_conservado(self):
         t=self.trabajador
         j=Justificacion.objects.create(trabajador=t,periodo=PeriodoAsistencia.objects.first(),tipo_documento=TipoDocumento.objects.first(),tipo_operacion=TipoOperacion.objects.first(),created_by=self.usuarios['Administrador'],updated_by=self.usuarios['Administrador'],fuente='EXCEL',fecha_movimiento=date(2026,10,1))
-        self.login('Consulta')
+        from django.contrib.auth.models import Permission
+        limitado = User.objects.create_user('solo_maestros')
+        limitado.user_permissions.add(Permission.objects.get(codename='view_trabajador'))
+        self.client.force_login(limitado)
         response=self.client.get(self.url('detalle',pk=t.pk))
         self.assertNotIn('relacionados',response.context)
         self.assertContains(response, 'Última modificación')

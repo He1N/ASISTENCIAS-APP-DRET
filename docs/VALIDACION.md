@@ -1,4 +1,4 @@
-# Validación — fase 2
+# Validación — fases 2 y 3
 
 ## Comandos ejecutados
 
@@ -42,7 +42,39 @@ dependencia de ejecución del proyecto. No se emplearon datos reales.
 ## Límites
 
 No se probó PostgreSQL, concurrencia simultánea bajo ese motor, Vercel ni Neon.
-Tampoco importación/exportación Excel o flujos diarios de justificaciones, que
-permanecen pendientes. No se afirma una auditoría completa de accesibilidad ni
+Tampoco importación/exportación Excel, que permanece pendiente. No se afirma una auditoría completa de accesibilidad ni
 compatibilidad con todos los navegadores. La suite CI reutiliza los comandos de
 Django; los resultados locales no garantizan por sí solos el estado remoto.
+
+## Validación añadida en fase 3
+
+Se ejecutaron de nuevo `check`, `makemigrations --check --dry-run` y la suite
+completa: 48 pruebas SQLite aprobadas (26 previas, 22 nuevas). El esquema queda sin
+migraciones nuevas. Las bases de pruebas y de navegador se crean con migraciones
+desde cero y únicamente datos ficticios. No se probaron servicios externos.
+
+Cobertura nueva: alta manual y campos obligatorios, actor/fecha/fuente no
+manipulables por POST, CUD literal, regla final pendiente/obligatoria/opcional e
+igual al inicio; horas válidas, independientes y fuera de papeletas; periodos
+cerrados/procesados con captura tardía sin transición automática; excepción de rango
+motivada; edición con motivo y versión conservando creador/origen; actualización
+de opciones sin guardar; autocompletado parcial sin tildes en los tres campos,
+homónimos identificados e inactivos; catálogo inactivo conservado en históricos;
+filtros combinados y errores seguros; permisos servidor y auditoría restringida;
+anulación lógica y rollback al fallar auditoría; CSRF, caché, escape y métodos HTTP.
+
+Se paginaron 511 justificaciones sintéticas en 21 páginas con orden estable y
+fechas nulas al final; la consulta de página se mantuvo debajo de 20 consultas SQL
+para detectar regresiones N+1. Es una prueba funcional, no un SLA de rendimiento.
+
+Playwright/Chromium (locale es-PE), escritorio 1440×1000 y móvil 390×844: acceso
+Operador, tres autocompletados y homónimos, nueva justificación en periodo procesado,
+error contextual por fin obligatorio y posterior alta con fin igual al inicio,
+registro tardío, edición motivada, búsqueda combinada con DNI/fechas/periodo/catálogos/
+CUD y retorno con filtros. Se verificó Consulta sin escritura y Administrador con
+auditoría/anulación, menú móvil y ausencia de desbordamiento de página/errores JS.
+Los filtros adicionales quedan plegados cuando no se usan; se abren al aplicar
+criterios. La tabla conserva su desplazamiento horizontal en pantallas pequeñas.
+
+PostgreSQL se mantiene como objetivo compatible del ORM; falta ejecutar esta suite
+bajo ese motor. No se incorporan Vercel/Neon, importación/exportación ni datos reales.

@@ -154,10 +154,14 @@ class Justificacion(Fechado):
         if self.fuente == 'EXCEL':
             return None
         corte = self.periodo.fecha_cierre or self.periodo.fecha_procesamiento
+        if not corte and self.periodo.estado != 'ABIERTO':
+            return None
         return bool(corte and self.created_at and self.created_at > corte)
     @property
     def plazo(self):
-        return 'Importado / sin determinar' if self.es_registro_tardio is None else ('Tardío' if self.es_registro_tardio else 'Ordinario')
+        if self.fuente == 'EXCEL':
+            return 'Importado / sin determinar'
+        return 'Sin determinar' if self.es_registro_tardio is None else ('Tardío' if self.es_registro_tardio else 'Ordinario')
     @property
     def duracion(self):
         if self.fecha_movimiento and self.fecha_final:

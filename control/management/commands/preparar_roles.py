@@ -10,7 +10,8 @@ class Command(BaseCommand):
         admin.permissions.set(app | Permission.objects.filter(content_type__app_label='auth'))
         operador, _ = Group.objects.get_or_create(name='Operador')
         allowed = {'view_trabajador', 'add_trabajador', 'change_trabajador', 'view_periodoasistencia', 'view_tipodocumento', 'view_tipooperacion'}
+        allowed |= {'view_justificacion', 'add_justificacion', 'change_justificacion'}
         operador.permissions.set(app.filter(codename__in=allowed))
         consulta, _ = Group.objects.get_or_create(name='Consulta')
-        consulta.permissions.set(app.filter(codename__in=['view_trabajador', 'view_periodoasistencia', 'view_tipodocumento', 'view_tipooperacion']))
+        consulta.permissions.set(app.filter(codename__in=['view_justificacion', 'view_trabajador', 'view_periodoasistencia', 'view_tipodocumento', 'view_tipooperacion']))
         self.stdout.write(self.style.SUCCESS('Roles preparados; no se crearon usuarios. Consulta no exporta por defecto.'))

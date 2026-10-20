@@ -6,7 +6,8 @@ def snapshot(obj):
             for f in obj._meta.concrete_fields if f.name not in {'nombre_busqueda', 'updated_at', 'created_at', 'datos_temporales'}}
 
 
-def registrar(obj, user, accion, antes=None):
+def registrar(obj, user, accion, antes=None, contexto=None):
     despues = snapshot(obj)
     cambios = {k: {'antes': (antes or {}).get(k), 'despues': v} for k, v in despues.items() if (antes or {}).get(k) != v}
-    HistorialCambio.objects.create(entidad=obj._meta.model_name, objeto_id=obj.pk, accion=accion, autor=user, cambios=cambios)
+    cambios.update({k: {'antes': None, 'despues': v} for k, v in (contexto or {}).items()})
+    return HistorialCambio.objects.create(entidad=obj._meta.model_name, objeto_id=obj.pk, accion=accion, autor=user, cambios=cambios)

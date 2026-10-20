@@ -1,0 +1,7 @@
+{% extends 'control/base.html' %}{% block title %}Anular justificación{% endblock %}
+{% block content %}<h1>Anular justificación {{ objeto.pk }}</h1>
+<p>{{ objeto.trabajador }} · {{ objeto.tipo_operacion }} · {{ objeto.fecha_movimiento|date:'d/m/Y'|default:'Sin determinar' }}</p>
+<p>La anulación conserva los datos y el historial. Confirme ingresando el motivo.</p>
+<form method="post" class="formulario" novalidate>{% csrf_token %}{{ form.non_field_errors }}
+{% for field in form %}{% if field.is_hidden %}{{ field }}{{ field.errors }}{% else %}<div class="campo"><label for="{{ field.id_for_label }}">{{ field.label }} (obligatorio)</label>{{ field }}{{ field.errors }}</div>{% endif %}{% endfor %}
+<div class="acciones"><button type="submit">Confirmar anulación</button><a href="{{ url_cancelar }}">Cancelar</a></div></form>{% endblock %}

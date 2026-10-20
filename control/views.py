@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, time
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -86,6 +86,8 @@ def valor_visible(obj, campo):
         return display()
     if isinstance(value, datetime):
         return timezone.localtime(value).strftime('%d/%m/%Y %H:%M')
+    if isinstance(value, time):
+        return value.strftime('%H:%M')
     if isinstance(value, date):
         return value.strftime('%d/%m/%Y')
     if value is None or value == '':
@@ -109,6 +111,8 @@ def contexto(request, tipo):
 @login_required
 @require_safe
 def inicio(request):
+    if request.user.has_perm('control.view_justificacion'):
+        return redirect('consultas')
     for tipo, spec in MAESTROS.items():
         if request.user.has_perm(f"control.view_{spec['modelo']._meta.model_name}"):
             return redirect('maestro_lista', tipo=tipo)

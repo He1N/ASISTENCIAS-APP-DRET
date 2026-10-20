@@ -1,0 +1,6 @@
+{% extends 'control/base.html' %}{% block title %}Iniciar sesión{% endblock %}
+{% block content %}<h1>Iniciar sesión</h1><form method="post" class="formulario" action="{% url 'login' %}" novalidate>{% csrf_token %}
+{% if form.errors %}<p class="resumen-error" role="alert">No se pudo iniciar sesión. Revise sus credenciales.</p>{% endif %}
+<input type="hidden" name="next" value="{{ next }}">
+{% for field in form %}<div class="campo"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}</div>{% endfor %}
+<button type="submit">Ingresar</button></form>{% endblock %}

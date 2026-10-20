@@ -1,0 +1,11 @@
+{% extends 'control/base.html' %}
+{% block content %}
+<div class="cabecera"><h1>{{ titulo }}</h1>{% if puede_crear %}<a class="boton" href="{{ url_nuevo }}">{{ nuevo }}</a>{% endif %}</div>
+<form class="filtros" method="get" aria-label="Búsqueda y filtros">
+{% for field in filtros %}<div><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
+<div class="acciones"><button type="submit">Buscar</button><a href="{{ url_limpiar }}">Limpiar filtros</a></div></form>
+<p class="conteo">{{ pagina.paginator.count }} coincidencia{{ pagina.paginator.count|pluralize:"s" }}</p>
+<div class="tabla"><table><caption class="solo-lector">{{ titulo }}</caption><thead><tr>{% for columna in columnas %}<th scope="col">{{ columna }}</th>{% endfor %}<th scope="col">Acción</th></tr></thead>
+<tbody>{% for fila in filas %}<tr>{% for celda in fila.celdas %}<td>{{ celda }}</td>{% endfor %}<td><a href="{{ fila.url }}">Ver<span class="solo-lector"> {{ fila.celdas.0 }}</span></a></td></tr>{% empty %}<tr><td colspan="{{ columnas|length|add:1 }}">No se encontraron registros con estos filtros.</td></tr>{% endfor %}</tbody></table></div>
+{% include 'control/paginacion.html' %}
+{% endblock %}

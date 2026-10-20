@@ -1,0 +1,22 @@
+{% load static %}<!doctype html>
+<html lang="es-PE">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ titulo|default:"Acceso" }}{% endblock %} · DRET</title>
+<link rel="stylesheet" href="{% static 'control/app.css' %}"></head>
+<body><a class="saltar" href="#contenido">Saltar al contenido</a>
+<header><span class="identidad">DRET <span>Control de Asistencias</span></span>
+{% if user.is_authenticated %}<div class="sesion"><span>{{ user.get_username }}</span><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="secundario" type="submit">Cerrar sesión</button></form></div>{% endif %}</header>
+<div class="estructura {% if not user.is_authenticated %}acceso{% endif %}">
+{% if user.is_authenticated %}<aside><nav aria-label="Navegación principal">
+<details open><summary>Menú</summary><div class="enlaces">
+{% if perms.control.view_trabajador %}<a href="{% url 'maestro_lista' tipo='trabajadores' %}" {% if tipo == 'trabajadores' %}aria-current="page"{% endif %}>Trabajadores</a>{% endif %}
+{% if perms.control.view_tipodocumento or perms.control.view_tipooperacion %}<span class="grupo">Catálogos</span>{% endif %}
+{% if perms.control.view_tipodocumento %}<a href="{% url 'maestro_lista' tipo='documentos' %}" {% if tipo == 'documentos' %}aria-current="page"{% endif %}>Tipos de documento</a>{% endif %}
+{% if perms.control.view_tipooperacion %}<a href="{% url 'maestro_lista' tipo='operaciones' %}" {% if tipo == 'operaciones' %}aria-current="page"{% endif %}>Tipos de operación</a>{% endif %}
+{% if perms.control.view_periodoasistencia %}<a href="{% url 'maestro_lista' tipo='periodos' %}" {% if tipo == 'periodos' %}aria-current="page"{% endif %}>Periodos</a>{% endif %}
+{% if user.is_staff and perms.auth.view_user %}<a href="{% url 'admin:auth_user_changelist' %}">Usuarios (administración)</a>{% endif %}
+</div></details></nav></aside>{% endif %}
+<main id="contenido" tabindex="-1">
+{% if messages %}<div aria-live="polite">{% for message in messages %}<p class="mensaje">{{ message }}</p>{% endfor %}</div>{% endif %}
+{% block content %}{% endblock %}
+</main></div></body></html>

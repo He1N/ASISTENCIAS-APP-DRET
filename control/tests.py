@@ -106,7 +106,7 @@ class CimientosTests(TestCase):
         c.force_login(self.admin)
         self.assertEqual(c.post(reverse('admin:control_trabajador_add'),{'apellidos_nombres':'PRUEBA'}).status_code,403)
         self.client.force_login(self.admin)
-        self.assertEqual(self.client.post(reverse('admin:logout')).status_code,200)
+        self.assertRedirects(self.client.post(reverse('admin:logout')), reverse('login'))
         self.assertNotIn('_auth_user_id',self.client.session)
         self.assertFalse(self.client.login(username='admin_prueba',password='incorrecta'))
         self.assertTrue(self.admin.password.startswith('pbkdf2_'))

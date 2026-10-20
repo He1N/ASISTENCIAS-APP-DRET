@@ -1,0 +1,11 @@
+{% extends 'control/base.html' %}
+{% block title %}{{ objeto }}{% endblock %}
+{% block content %}<a href="{{ url_lista }}">Volver a {{ titulo|lower }}</a>
+<div class="cabecera"><h1>{{ objeto }}</h1>{% if puede_editar %}<a class="boton" href="{{ url_editar }}">Editar</a>{% endif %}</div>
+<dl class="ficha">{% for label, value in datos %}<div><dt>{{ label }}</dt><dd>{{ value|linebreaksbr }}</dd></div>{% endfor %}</dl>
+{% if total_relacionados != None %}<h2>Justificaciones relacionadas</h2><p>{{ total_relacionados }} registro{{ total_relacionados|pluralize:"s" }} en el historial.</p>
+{% if relacionados != None %}<div class="tabla"><table><thead><tr><th scope="col">Fecha de movimiento</th><th scope="col">Trabajador</th><th scope="col">Periodo</th><th scope="col">Documento</th><th scope="col">Operación</th><th scope="col">Estado</th></tr></thead><tbody>
+{% for registro in relacionados %}<tr><td>{{ registro.fecha_movimiento|date:'d/m/Y'|default:'Sin determinar' }}</td><td>{{ registro.trabajador }}</td><td>{{ registro.periodo }}</td><td>{{ registro.tipo_documento }}</td><td>{{ registro.tipo_operacion }}</td><td>{{ registro.anulada|yesno:'Anulada,Vigente' }}</td></tr>{% empty %}<tr><td colspan="6">No hay justificaciones relacionadas.</td></tr>{% endfor %}</tbody></table></div>
+{% include 'control/paginacion.html' with pagina=relacionados consulta_pagina=consulta_historial parametro='historial_page' %}
+{% elif total_relacionados %}<p>Su cuenta no tiene permiso para consultar el detalle de las justificaciones.</p>{% endif %}{% endif %}
+{% endblock %}

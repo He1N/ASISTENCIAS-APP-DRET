@@ -1,4 +1,4 @@
-# Modelo de datos — fase 1
+# Modelo de datos — fases 1 y 2
 
 Trabajador: nombre obligatorio no único, DNI textual nullable, área opcional,
 activo y timestamps. Índice normalizado auxiliar sin modificar el nombre original.
@@ -28,3 +28,14 @@ HistorialCambio almacena actor, fecha y diferencias; protegido en la interfaz,
 sin almacenar contraseñas. Usuarios y grupos usan el historial nativo de Django.
 No hay borrado físico de maestros desde la interfaz; las relaciones históricas
 usan PROTECT. Roles se preparan después de migrar con `preparar_roles`.
+
+## Interfaces de fase 2
+
+Sin cambios en modelos ni migraciones. Las pantallas propias reutilizan los
+ModelForms de fase 1 y una función compartida con Admin para las fechas de estado.
+Cada ruta aplica permisos Django; lectura no concede escritura. La edición web
+valida la versión `updated_at` leída al abrir y guarda dentro de `atomic()` con
+su HistorialCambio. Los campos de versión/autorizaciones son solo de formulario.
+SQLite no implementa bloqueo de filas: antes de producción se debe probar el
+comportamiento con el motor definitivo. Las escrituras por Admin conservan el
+comportamiento de fase 1; su formulario no usa la versión de las pantallas web.

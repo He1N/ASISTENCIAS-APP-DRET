@@ -35,6 +35,7 @@
         const url = new URL(container.dataset.endpoint, window.location.origin);
         url.searchParams.set('q', input.value);
         url.searchParams.set('modo', container.dataset.modo);
+        if (select.dataset.grupo) url.searchParams.set('grupo', select.dataset.grupo);
         const response = await fetch(url, {signal: controller.signal, headers: {'Accept': 'application/json'}});
         if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) throw new Error('respuesta');
         const {results} = await response.json();

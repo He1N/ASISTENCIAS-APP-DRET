@@ -1,4 +1,4 @@
-# Validación — fases 2 y 3
+# Validación — fases 2 a 4
 
 ## Comandos ejecutados
 
@@ -42,7 +42,7 @@ dependencia de ejecución del proyecto. No se emplearon datos reales.
 ## Límites
 
 No se probó PostgreSQL, concurrencia simultánea bajo ese motor, Vercel ni Neon.
-Tampoco importación/exportación Excel, que permanece pendiente. No se afirma una auditoría completa de accesibilidad ni
+En fase 2 tampoco se probó importación/exportación Excel; su verificación se añade abajo en fase 4. No se afirma una auditoría completa de accesibilidad ni
 compatibilidad con todos los navegadores. La suite CI reutiliza los comandos de
 Django; los resultados locales no garantizan por sí solos el estado remoto.
 
@@ -77,4 +77,33 @@ Los filtros adicionales quedan plegados cuando no se usan; se abren al aplicar
 criterios. La tabla conserva su desplazamiento horizontal en pantallas pequeñas.
 
 PostgreSQL se mantiene como objetivo compatible del ORM; falta ejecutar esta suite
-bajo ese motor. No se incorporan Vercel/Neon, importación/exportación ni datos reales.
+bajo ese motor. Al cerrar fase 3 no se incorporaban Vercel/Neon, importación/exportación ni datos reales.
+
+## Fase 4
+
+81 pruebas Django/SQLite aprobadas: las 48 anteriores y 33 nuevas. `check` sin
+incidencias, `makemigrations --check --dry-run` sin cambios y `migrate --noinput`
+verificado. La base de navegador se creó desde cero con las migraciones existentes.
+
+Pruebas nuevas: duración inclusiva/no calculable; grupos configurables independientes
+del nombre, filtros de sindical y rangos de fin; exportación completa de filtros y
+periodos, permisos independientes y textos sin fórmulas. Importación con columnas
+reordenadas y encabezados originales de dos filas, época Excel 1904 y ceros iniciales;
+CUD octubre descartado/noviembre conservado y no extendido a otros años; homónimos,
+solo nombre, catálogo discrepante con asignación auditada, reglas pendientes/faltantes,
+horas incompletas y fechas contradictorias; periodo cerrado/fuera de rango motivado;
+duplicados dentro de archivo y contra registros existentes, reimportación idempotente,
+rollback total ante un fallo, versiones y maestros cambiantes, carga/hoja/revisión/
+confirmación por servidor, CSRF, acceso por dueño, purga y anulación de lote protegida.
+Se importaron además 511 filas ficticias y se verificaron las cantidades finales.
+
+Playwright/Chromium local a 1440×1000 y 390×844: carga XLSX, selección de hoja,
+previsualización con excepción octubre, revisar/confirmar, resumen, reimportación
+sin duplicados, Vacaciones y Licencias, filtros, acceso al registro original y
+exportaciones descargadas y reabiertas con openpyxl. Se comprobaron DNI textual,
+CUD nulo de octubre y duración, permisos de Consulta y ausencia de desbordamiento
+horizontal de página/errores JavaScript. Las tablas tienen desplazamiento propio.
+
+No se validó el workbook real ni la guía OJO completa. Tampoco PostgreSQL,
+concurrencia bajo ese motor, Vercel/Neon, backups ni despliegue. Los límites de formato
+y de revisión se documentan en IMPORTACION_EXCEL.md. No hay datos reales en pruebas.

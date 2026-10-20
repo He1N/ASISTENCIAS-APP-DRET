@@ -13,7 +13,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods, require_safe
 from .audit import registrar, snapshot
 from .models import Trabajador, TipoDocumento, TipoOperacion, PeriodoAsistencia, normalizar
-from .services import preparar_fechas_estado
+from .services import preparar_fechas_estado, filtrar_periodos
 from .webforms import (TrabajadorWebForm, DocumentoWebForm, OperacionWebForm,
                        PeriodoWebForm, FiltroMaestros, FiltroPeriodos)
 
@@ -133,10 +133,7 @@ def maestro_lista(request, tipo):
         data = filtros.cleaned_data
         term = data['q']
         if tipo == 'periodos':
-            if term:
-                qs = qs.filter(Q(titulo__icontains=term) | Q(notas__icontains=term))
-            if data['estado']:
-                qs = qs.filter(estado=data['estado'])
+            qs = filtrar_periodos(qs, data)
         else:
             if term:
                 search = Q(nombre_busqueda__contains=normalizar(term))
@@ -157,6 +154,8 @@ def maestro_lista(request, tipo):
     page_query = query.copy()
     page_query.pop('page', None)
     ctx = contexto(request, tipo)
+    if tipo == 'periodos':
+        ctx['url_exportar'] = reverse('exportar_periodos') + ('?' + page_query.urlencode() if page_query else '')
     ctx.update(filtros=filtros, pagina=page, filas=rows, columnas=spec['columnas'],
                consulta_pagina=page_query.urlencode(),
                url_limpiar=reverse('maestro_lista', kwargs={'tipo': tipo}))

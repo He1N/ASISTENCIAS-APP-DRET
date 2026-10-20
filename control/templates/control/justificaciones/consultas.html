@@ -1,6 +1,6 @@
 {% extends 'control/base.html' %}{% load static %}
 {% block content %}
-<div class="cabecera"><h1>Consultas</h1>{% if perms.control.add_justificacion %}<a class="boton" href="{{ url_nuevo }}">Nueva justificación</a>{% endif %}</div>
+<div class="cabecera"><h1>Consultas</h1>{% if perms.control.exportar_resultados %}<a class="boton" href="{{ url_exportar }}">Exportar Excel</a>{% endif %}{% if perms.control.add_justificacion %}<a class="boton" href="{{ url_nuevo }}">Nueva justificación</a>{% endif %}</div>
 <form method="get" class="filtros consultas-filtros" aria-label="Filtros de consultas">
   {% for field in filtros_principales %}<div><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
   <details class="filtros-avanzados" {% if abrir_avanzados %}open{% endif %}><summary>Más filtros</summary>

@@ -1,0 +1,7 @@
+{% extends 'control/base.html' %}
+{% block content %}<h1>Importar Excel</h1><p>Seleccione un XLSX y el periodo administrativo. La carga no crea justificaciones; primero se revisan hojas y filas. El archivo original no se conserva.</p>
+<form method="post" enctype="multipart/form-data" class="formulario" novalidate>{% csrf_token %}{{ form.non_field_errors }}
+{% for field in form %}{% if not field.name|slice:':4' == 'col_' %}<div class="campo"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endif %}{% endfor %}
+<details {% if form.errors %}open{% endif %}><summary>Mapeo de columnas (opcional)</summary><p>Se detectan los encabezados de las dos filas indicadas. Si varían o son ambiguos, indique letras entre A y BL. Solo se interpretan las columnas mapeadas.</p>
+{% for field in form %}{% if field.name|slice:':4' == 'col_' %}<div class="campo"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endif %}{% endfor %}</details>
+<button type="submit">Leer archivo y seleccionar hoja</button></form>{% endblock %}

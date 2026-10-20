@@ -10,3 +10,12 @@ def preparar_fechas_estado(obj):
             obj.fecha_cierre = timezone.now()
         if obj.estado == 'PROCESADO' and not obj.fecha_procesamiento:
             obj.fecha_procesamiento = timezone.now()
+
+
+def filtrar_periodos(qs, data):
+    from django.db.models import Q
+    if data.get('q'):
+        qs = qs.filter(Q(titulo__icontains=data['q']) | Q(notas__icontains=data['q']))
+    if data.get('estado'):
+        qs = qs.filter(estado=data['estado'])
+    return qs

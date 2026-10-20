@@ -7,10 +7,12 @@ from .models import Trabajador, TipoDocumento, TipoOperacion, normalizar
 MODELOS = {'trabajador': Trabajador, 'tipo_documento': TipoDocumento, 'tipo_operacion': TipoOperacion}
 
 
-def buscar_opciones(model, term, incluir_inactivos=False):
+def buscar_opciones(model, term, incluir_inactivos=False, grupo=None):
     qs = model.objects.all()
     if model is not Trabajador and not incluir_inactivos:
         qs = qs.filter(activo=True)
+    if model is TipoOperacion and grupo in ('VACACIONES', 'SINDICAL'):
+        qs = qs.filter(grupo_especial=grupo)
     if term:
         predicate = Q(nombre_busqueda__contains=normalizar(term))
         predicate |= Q(dni__contains=term) if model is Trabajador else Q(codigo_externo__icontains=term)
@@ -40,17 +42,19 @@ class BusquedaSelect(forms.Select):
         return ctx
 
 
-def configurar_busquedas(form, parametros, modo='alta'):
+def configurar_busquedas(form, parametros, modo='alta', grupo=None):
     for campo, model in MODELOS.items():
         field = form.fields[campo]
         seleccionado = form.data.get(campo) if form.is_bound else form.initial.get(campo)
         term = str(parametros.get(campo + '_buscar', ''))[:250].strip()
-        options = list(buscar_opciones(model, term, incluir_inactivos=modo == 'consulta'))
+        options = list(buscar_opciones(model, term, incluir_inactivos=modo == 'consulta', grupo=grupo))
         current = None
         if seleccionado and str(seleccionado).isdigit():
             current = field.queryset.filter(pk=seleccionado).first()
         if current and current.pk not in [obj.pk for obj in options]:
             options.insert(0, current)
         widget = BusquedaSelect(campo, term, modo)
+        if grupo and campo == 'tipo_operacion':
+            widget.attrs['data-grupo'] = grupo
         field.widget = widget
         widget.choices = [('', 'Seleccione…')] + [(obj.pk, etiqueta(obj)) for obj in options]

@@ -1,0 +1,10 @@
+{% extends 'control/base.html' %}{% block content %}
+<h1>Resumen de importación</h1><p>{{ lote.archivo_nombre }} · {{ lote.hoja }} · {{ lote.periodo }} · Estado: {{ lote.estado }}</p>
+<p>Leídas: {{ lote.total_leidos }} · Insertadas: {{ lote.insertados }} · Omitidas: {{ lote.omitidos }} · Incidencias: {{ lote.alertas }}.</p>
+{% if lote.reglas_aplicadas %}<p>Reglas aplicadas: {{ lote.reglas_aplicadas|join:', ' }}</p>{% endif %}
+{% if error %}<p class="resumen-error" role="alert">{{ error }}</p>{% endif %}
+<p><a href="{% url 'importar_excel' %}">Cargar otro archivo</a></p>
+{% if registros.paginator.count %}<h2>Registros del lote</h2><ul>{% for obj in registros %}<li>Fila {{ obj.fila_origen }} · {{ obj.trabajador }} · <a href="{% url 'justificacion_detalle' obj.pk %}">Ver registro #{{ obj.pk }}</a></li>{% endfor %}</ul>{% include 'control/paginacion.html' with pagina=registros %}{% endif %}
+{% if incidencias.paginator.count %}<h2>Incidencias</h2><ul>{% for issue in incidencias %}<li>Fila {{ issue.fila }} · {{ issue.severidad }} · {{ issue.campo }}: {{ issue.mensaje }}</li>{% endfor %}</ul>{% include 'control/paginacion.html' with pagina=incidencias parametro='incidencia_page' %}{% endif %}
+{% if lote.estado == 'CONFIRMADO' and perms.control.anular_justificacion %}<details><summary>Anular registros del lote</summary><p>Solo si no hubo modificaciones posteriores. Se conserva el historial; no hay borrado físico.</p><form method="post" class="formulario">{% csrf_token %}<label for="motivo">Motivo de anulación</label><textarea id="motivo" name="motivo" required maxlength="2000"></textarea><button type="submit">Confirmar anulación del lote</button></form></details>{% endif %}
+{% endblock %}

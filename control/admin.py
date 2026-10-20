@@ -1,10 +1,10 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin, GroupAdmin
 from django.contrib.auth.models import User, Group
-from django.utils import timezone
 from .models import Trabajador, TipoDocumento, TipoOperacion, PeriodoAsistencia, HistorialCambio
 from .forms import TrabajadorForm, DocumentoForm, OperacionForm, PeriodoForm
 from .audit import registrar, snapshot
+from .services import preparar_fechas_estado
 
 admin.site.site_header = 'Control de Asistencias — DRET'
 admin.site.site_title = 'DRET'
@@ -16,11 +16,7 @@ class AuditadoAdmin(admin.ModelAdmin):
         return False
     def save_model(self, request, obj, form, change):
         antes = snapshot(type(obj).objects.get(pk=obj.pk)) if change else None
-        if isinstance(obj, PeriodoAsistencia):
-            if obj.estado in ('CERRADO', 'PROCESADO') and not obj.fecha_cierre:
-                obj.fecha_cierre = timezone.now()
-            if obj.estado == 'PROCESADO' and not obj.fecha_procesamiento:
-                obj.fecha_procesamiento = timezone.now()
+        preparar_fechas_estado(obj)
         super().save_model(request, obj, form, change)
         registrar(obj, request.user, 'editar' if change else 'crear', antes)
 

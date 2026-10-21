@@ -10,7 +10,7 @@ autorizada antes de una migración institucional. No se inventan códigos o regl
 
 ## Lectura y límites
 
-Dependencias fijadas: openpyxl y defusedxml. Solo XLSX, máximo 10 MB comprimidos,
+Dependencias fijadas: openpyxl y defusedxml. Solo XLSX, máximo 10 MiB comprimidos fuera de Vercel (4 MB en Vercel),
 50 MB descomprimidos, 2000 entradas ZIP, 12 hojas de registros, 5000 filas no vacías
 en total y 20000 filas inspeccionadas por hoja. Se rechazan macros y fórmulas en
 campos importados; nunca se evalúan ni se consulta una caché de fórmula. OJO se
@@ -107,3 +107,13 @@ incluso si empiezan con =, +, -, @ o tabuladores; no se crean fórmulas ejecutab
 La respuesta privada sin caché transmite un archivo temporal que se cierra al
 terminar la descarga. No conserva exportaciones como documentos permanentes.
 Exportar no equivale a un backup de base de datos.
+
+## Alojamiento — fase 5
+
+En Vercel el máximo del XLSX es 4.000.000 bytes; cuerpo HTTP hasta 4.250.000 bytes
+y respuestas hasta 4.000.000 bytes. Se valida también en parser, fuera del
+formulario. Una previa o descarga excesiva devuelve 413 en español; no se recorta
+el contenido ni se descarga un XLSX parcial. Dividir fuentes grandes y aplicar
+filtros a las exportaciones. El proveedor puede rechazar cargas mayores antes de
+Django. No hay adjuntos persistentes ni almacenamiento externo incorporado.
+Ver DESPLIEGUE.md para duración de función y límites del ensayo local.

@@ -1,25 +1,27 @@
 from django import forms
+from django.conf import settings
 from openpyxl.utils import column_index_from_string
 from .models import PeriodoAsistencia
-from .xlsx_parser import CAMPOS, MAX_ARCHIVO
+from .xlsx_parser import CAMPOS, limite_archivo_texto
 
 
 class SubirExcelForm(forms.Form):
-    archivo = forms.FileField(label='Archivo XLSX (máximo 10 MB)')
+    archivo = forms.FileField(label='Archivo XLSX')
     periodo = forms.ModelChoiceField(label='Periodo administrativo', queryset=PeriodoAsistencia.objects.all())
     encabezado = forms.IntegerField(label='Primera fila de encabezado', min_value=1, max_value=50, initial=2)
     primera_fila = forms.IntegerField(label='Primera fila de datos', min_value=2, max_value=100, initial=5)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['archivo'].label = f'Archivo XLSX (máximo {limite_archivo_texto()})'
         for key, nombre in CAMPOS.items():
             self.fields['col_' + key] = forms.CharField(label=nombre + ' — columna', required=False,
                 max_length=2, help_text='Opcional: letra para sustituir la detección del encabezado.')
 
     def clean_archivo(self):
         file = self.cleaned_data['archivo']
-        if file.size > MAX_ARCHIVO or not file.name.lower().endswith('.xlsx'):
-            raise forms.ValidationError('Seleccione un .xlsx de hasta 10 MB.')
+        if file.size > settings.XLSX_UPLOAD_MAX_BYTES or not file.name.lower().endswith('.xlsx'):
+            raise forms.ValidationError(f'Seleccione un .xlsx de hasta {limite_archivo_texto()}.')
         return file
 
     def clean(self):

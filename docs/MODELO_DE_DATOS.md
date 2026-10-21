@@ -55,7 +55,7 @@ Los campos de captura, usuario y fuente no están expuestos al POST del formular
 Los filtros/autocompletados usan Django ORM, índice normalizado auxiliar y
 `select_related`; no dependen de extensiones PostgreSQL ni SQL específico de SQLite.
 El orden de Consultas indica NULLS LAST explícitamente para igualar ambos motores.
-SQLite se ha probado; PostgreSQL no se ha ejecutado todavía ni se configura Neon.
+SQLite y PostgreSQL 17 se probaron en fase 5; no se creó un proyecto Neon.
 En un despliegue futuro deberán validarse el controlador, configuración y migraciones
 bajo PostgreSQL antes de introducir datos institucionales.
 
@@ -82,4 +82,13 @@ Justificacion conserva fuente EXCEL, autor, lote/fila/ítem y huella. Las incide
 conservan el dato original mínimo de errores o asignaciones manuales discrepantes.
 Operador obtiene importar_excel/exportar_resultados/view_loteimportacion al ejecutar
 preparar_roles; Consulta mantiene lectura. Permisos de anulación siguen restringidos.
-El ORM sigue siendo portable; la ejecución bajo PostgreSQL queda para fase 5.
+El ORM y las migraciones se verificaron bajo PostgreSQL 17 en fase 5, sin cambios de esquema.
+
+## Infraestructura — fase 5
+
+DATABASE_URL selecciona PostgreSQL con psycopg 3; sin URL solo hay SQLite en
+desarrollo. La ejecución serverless usa conexiones sin persistencia y desactiva
+cursores de servidor/sentencias preparadas para pooling de transacciones.
+Las migraciones y el respaldo usan conexión directa. Sesiones y previsualizaciones
+se conservan en la base; no dependen de disco persistente. No se añadieron modelos
+ni migraciones. Ver DESPLIEGUE.md y RESPALDOS.md.

@@ -1,7 +1,9 @@
 # Control de Asistencias — DRET
 
-Implementación de fases 1 a 4 (maestros, justificaciones, consultas e históricos) conforme a `ESPECIFICACION.md` y `AGENTS.md`.
-Python 3.12 y Django 5.2 LTS. SQLite local. No hay configuración de Vercel ni Neon.
+Implementación de fases 1 a 5 (maestros, justificaciones, consultas e históricos) conforme a `ESPECIFICACION.md` y `AGENTS.md`.
+Python 3.12 y Django 5.2 LTS. SQLite local y PostgreSQL mediante DATABASE_URL.
+Configuración preparada para Vercel/Neon; no se ha desplegado ni creado proyectos.
+Guías: [despliegue y migraciones](docs/DESPLIEGUE.md), [respaldos](docs/RESPALDOS.md).
 
 ## Ejecutar localmente (Bash)
 
@@ -75,14 +77,15 @@ python manage.py makemigrations --check --dry-run
 python manage.py test -v 1
 ```
 
-La suite completa pasa 81 pruebas en SQLite (33 nuevas en fase 4), incluidas
+La suite completa pasa 93 pruebas en SQLite y 93 en PostgreSQL 17, incluidas
 importación y paginación de 511 registros sintéticos.
 `check` no reporta incidencias y `makemigrations --check --dry-run` no detecta
 cambios. Se verificó además el flujo web con Chromium en escritorio y móvil.
 Las pruebas crean su base desde cero con las migraciones existentes; esta fase
 no modifica el esquema ni añade migraciones. Ver [validación](docs/VALIDACION.md).
-Se probaron XLSX sintéticos y descargas en navegador. No se validó el workbook
-institucional real, PostgreSQL ni despliegue.
+Se probaron XLSX sintéticos y descargas en navegador. La fase 5 verifica también
+producción local con HTTPS, PostgreSQL con TLS, estáticos y respaldo/restauración.
+No se validó el workbook institucional real ni un despliegue Vercel/Neon.
 
 ## Roles y continuidad
 
@@ -121,16 +124,19 @@ los grupos; revisar asignaciones institucionales antes de aplicarlo en una base 
 
 ## Pendiente
 
-Fase 5: configuración y validación PostgreSQL, respaldos, concurrencia y despliegue
-productivo autorizado. El XLSX real y las reglas completas de OJO siguen pendientes
+Pendientes: primer despliegue y comprobación en Vercel/Neon, operación de
+respaldos y ensayos de concurrencia simultánea. El XLSX real y las reglas completas de OJO siguen pendientes
 de revisión; no se afirma haber validado esos documentos. No hay borrado físico ni
 restauración de registros anulados.
 El aviso por versión de esta fase cubre formularios web abiertos antes de otra
 edición; SQLite no ofrece bloqueos de fila para garantizar escrituras simultáneas.
 Los autocompletados requieren seleccionar una coincidencia explícita; escribir
 un texto no asigna automáticamente una persona ni un catálogo.
-No se calcula saldo oficial. `DATABASE_URL`, validación PostgreSQL, respaldos y
-configuración de despliegue se incorporarán posteriormente; hoy solo SQLite.
+No se calcula saldo oficial. La fase 5 incorpora DATABASE_URL, validación PostgreSQL,
+configuración de despliegue y procedimientos de migración y recuperación.
+En Vercel el XLSX admite 4 MB y las respuestas 4 MB; aplicar filtros o dividir
+fuentes grandes. Fuera de Vercel se conserva el límite de 10 MiB.
+Ver [límites y variables de producción](docs/DESPLIEGUE.md).
 
 Documentación: [modelo](docs/MODELO_DE_DATOS.md),
 [manual](docs/MANUAL_USUARIO.md), [importación](docs/IMPORTACION_EXCEL.md).

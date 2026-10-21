@@ -1,0 +1,66 @@
+name: Crear primer administrador
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: crear-primer-administrador
+  cancel-in-progress: false
+jobs:
+  crear:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      DJANGO_SUPERUSER_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+      DJANGO_SUPERUSER_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+      DJANGO_SUPERUSER_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements.txt
+      - name: Crear cuenta sin mostrar credenciales
+        run: |
+          python - <<'PY'
+          import os
+          import secrets
+          from urllib.parse import urlsplit, parse_qs
+          for key in ('DATABASE_URL', 'DJANGO_SUPERUSER_USERNAME', 'DJANGO_SUPERUSER_EMAIL', 'DJANGO_SUPERUSER_PASSWORD'):
+              if not os.environ.get(key):
+                  raise SystemExit('Falta configurar un secreto requerido: ' + key)
+          url = urlsplit(os.environ['DATABASE_URL'])
+          if url.scheme not in ('postgres', 'postgresql') or parse_qs(url.query).get('sslmode', ['require'])[0] not in ('require', 'verify-ca', 'verify-full'):
+              raise SystemExit('Se requiere PostgreSQL con TLS.')
+          os.environ.update(
+              DJANGO_SETTINGS_MODULE='config.settings', DEBUG='False',
+              SECRET_KEY=secrets.token_urlsafe(64),
+              ALLOWED_HOSTS='localhost', CSRF_TRUSTED_ORIGINS='https://localhost',
+          )
+          import django
+          django.setup()
+          from django.contrib.auth import get_user_model
+          from django.contrib.auth.password_validation import validate_password
+          from django.core.exceptions import ValidationError
+          from django.core.management import call_command
+          from django.db import transaction
+          call_command('migrate', check=True, verbosity=0)
+          User = get_user_model()
+          with transaction.atomic():
+              if User.objects.filter(is_superuser=True).exists():
+                  raise SystemExit('Ya existe un administrador. Gestionar las cuentas desde /admin/. No se modificó ninguna cuenta.')
+              user = User(
+                  username=os.environ['DJANGO_SUPERUSER_USERNAME'],
+                  email=os.environ['DJANGO_SUPERUSER_EMAIL'],
+                  is_active=True, is_staff=True, is_superuser=True,
+              )
+              try:
+                  user.full_clean(exclude=['password'])
+                  validate_password(os.environ['DJANGO_SUPERUSER_PASSWORD'], user)
+              except ValidationError:
+                  raise SystemExit('Usuario, correo o contraseña no válidos. Use una contraseña larga, poco común y distinta del usuario.')
+              user.set_password(os.environ['DJANGO_SUPERUSER_PASSWORD'])
+              user.save()
+          print('Primer administrador creado. Puede ingresar a la aplicación y a /admin/.')
+          PY

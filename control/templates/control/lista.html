@@ -1,6 +1,6 @@
 {% extends 'control/base.html' %}
 {% block content %}
-<div class="cabecera"><h1>{{ titulo }}</h1>{% if puede_crear %}<a class="boton" href="{{ url_nuevo }}">{{ nuevo }}</a>{% endif %}</div>
+<div class="cabecera"><h1>{{ titulo }}</h1>{% if url_exportar and perms.control.exportar_resultados %}<a class="boton" href="{{ url_exportar }}">Exportar Excel</a>{% endif %}{% if puede_crear %}<a class="boton" href="{{ url_nuevo }}">{{ nuevo }}</a>{% endif %}</div>
 <form class="filtros" method="get" aria-label="Búsqueda y filtros">
 {% for field in filtros %}<div><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
 <div class="acciones"><button type="submit">Buscar</button><a href="{{ url_limpiar }}">Limpiar filtros</a></div></form>

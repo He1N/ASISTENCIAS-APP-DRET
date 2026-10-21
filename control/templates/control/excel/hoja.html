@@ -1,0 +1,6 @@
+{% extends 'control/base.html' %}{% block content %}
+<h1>Seleccionar hoja</h1><p>{{ lote.archivo_nombre }} · Periodo: {{ lote.periodo }}. No se deducen fechas del título de la hoja.</p>
+{% if octubre %}<p class="mensaje">Periodo histórico de octubre de 2026: se descartarán TODOS los CUD, incluso si se marca conservar. No se modifican CUD existentes.</p>{% endif %}
+<form method="post" class="formulario">{% csrf_token %}{{ form.non_field_errors }}{% for field in form %}<div class="campo"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}<div class="acciones"><button type="submit">Previsualizar hoja</button><button type="submit" name="accion" value="cancelar" class="secundario">Cancelar carga</button></div></form>
+<details><summary>Hojas detectadas</summary>{% for nombre, hoja in hojas.items %}<p>{{ nombre }}: {% if hoja.error %}{{ hoja.error }}{% else %}{{ hoja.filas|length }} filas reconocidas{% endif %}</p>{% endfor %}</details>
+{% endblock %}

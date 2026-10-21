@@ -64,13 +64,15 @@ class FiltroJustificaciones(forms.Form):
     orden = forms.ChoiceField(label='Orden', required=False,
         choices=[('', 'Fecha de movimiento'), ('captura', 'Última captura')])
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, grupo=None, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             if isinstance(field, forms.DateField):
                 field.widget = forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'})
                 field.input_formats = ['%Y-%m-%d', '%d/%m/%Y']
-        configurar_busquedas(self, self.data, modo='consulta')
+        if grupo:
+            self.fields['tipo_operacion'].queryset = self.fields['tipo_operacion'].queryset.filter(grupo_especial=grupo)
+        configurar_busquedas(self, self.data, modo='consulta', grupo=grupo)
 
     def clean(self):
         data = super().clean()
@@ -82,3 +84,13 @@ class FiltroJustificaciones(forms.Form):
 class AnulacionForm(forms.Form):
     motivo = forms.CharField(label='Motivo de anulación', max_length=2000, widget=forms.Textarea(attrs={'rows': 3}))
     version = forms.CharField(widget=forms.HiddenInput)
+
+
+class FiltroEspecial(FiltroJustificaciones):
+    final_desde = forms.DateField(label='Fecha final desde', required=False)
+    final_hasta = forms.DateField(label='Fecha final hasta', required=False)
+    def clean(self):
+        data = super().clean()
+        if data.get('final_desde') and data.get('final_hasta') and data['final_desde'] > data['final_hasta']:
+            self.add_error('final_hasta', 'La fecha final hasta no puede ser anterior a desde.')
+        return data

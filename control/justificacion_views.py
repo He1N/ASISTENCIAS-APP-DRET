@@ -63,7 +63,7 @@ def autocompletar(request, campo):
         raise PermissionDenied
     exigir_permiso(request.user, model, 'view')
     term = request.GET.get('q', '')[:250].strip()
-    objetos = buscar_opciones(model, term, incluir_inactivos=request.GET.get('modo') == 'consulta')
+    objetos = buscar_opciones(model, term, incluir_inactivos=request.GET.get('modo') == 'consulta', grupo=request.GET.get('grupo'))
     results = []
     for obj in objetos:
         item = {'id': obj.pk, 'label': etiqueta(obj)}
@@ -73,12 +73,7 @@ def autocompletar(request, campo):
     return JsonResponse({'results': results, 'limite': 20})
 
 
-@never_cache
-@login_required
-@require_safe
-def consultas(request):
-    exigir_permiso(request.user, Justificacion, 'view')
-    filtros = FiltroJustificaciones(request.GET)
+def aplicar_filtros(filtros):
     qs = relacionados()
     if filtros.is_valid():
         data = filtros.cleaned_data
@@ -101,10 +96,21 @@ def consultas(request):
         qs = qs.order_by('-created_at', '-pk') if data['orden'] == 'captura' else qs.order_by(F('fecha_movimiento').desc(nulls_last=True), '-pk')
     else:
         qs = qs.none()
+    return qs
+
+
+@never_cache
+@login_required
+@require_safe
+def consultas(request):
+    exigir_permiso(request.user, Justificacion, 'view')
+    filtros = FiltroJustificaciones(request.GET)
+    qs = aplicar_filtros(filtros)
     page = Paginator(qs, 25).get_page(request.GET.get('page'))
     query = consulta_query(request)
     query.pop('page', None)
     ctx = contexto(request)
+    ctx['url_exportar'] = reverse('exportar_consultas') + ('?' + query.urlencode() if query else '')
     principales = ['q', 'trabajador', 'periodo', 'fecha']
     avanzados = [key for key in filtros.fields if key not in principales]
     ctx.update(filtros_principales=[filtros[key] for key in principales],
@@ -126,7 +132,9 @@ def justificacion_detalle(request, pk):
         ('fecha_final', 'Fecha final'), ('hora_salida', 'Hora de salida'), ('hora_retorno', 'Hora de retorno'),
         ('cud', 'CUD'), ('fecha_recepcion', 'Fecha de recepción'), ('observaciones', 'Observaciones'),
         ('created_at', 'Fecha de captura'), ('created_by', 'Registrado por'),
-        ('updated_at', 'Última modificación'), ('updated_by', 'Modificado por'), ('fuente', 'Fuente')]
+        ('updated_at', 'Última modificación'), ('updated_by', 'Modificado por'), ('fuente', 'Fuente'),
+        ('estado_calidad', 'Calidad del registro'), ('lote_importacion_id', 'Lote de importación'),
+        ('fila_origen', 'Fila de origen'), ('item_origen', 'Ítem de origen')]
     datos = [(label, valor_visible(obj, field)) for field, label in fields]
     datos += [('Plazo', obj.plazo), ('Estado', 'Anulada' if obj.anulada else 'Vigente')]
     if obj.anulada:

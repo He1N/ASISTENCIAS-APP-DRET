@@ -1,4 +1,4 @@
-# Modelo de datos — fases 1, 2 y 3
+# Modelo de datos — fases 1 a 4
 
 Trabajador: nombre obligatorio no único, DNI textual nullable, área opcional,
 activo y timestamps. Índice normalizado auxiliar sin modificar el nombre original.
@@ -18,12 +18,12 @@ creador/editor, captura, origen y anulación lógica. `full_clean()` valida alta
 manuales y reglas finales, incluyendo fin igual al inicio. Como Django no llama
 `full_clean()` en `save()`, futuros servicios deben validar explícitamente.
 Importados devuelven tardanza indeterminada. La restricción SQL de orden de fechas
-rechaza contradicciones; el futuro importador deberá conservar el crudo en
-incidencias y evitar insertar fechas contradictorias sin revisión.
+rechaza contradicciones; el importador conserva el crudo mínimo en
+incidencias y evita insertar fechas contradictorias.
 
 LoteImportacion contiene checksum, hoja, periodo, contadores, actor y reglas;
-IncidenciaImportacion enlaza lote, fila, campo y severidad. Son estructura sin
-importador activo. La política de reimportación se completará con el asistente.
+IncidenciaImportacion enlaza lote, fila, campo y severidad. El asistente de fase 4
+activa esta estructura sin cambios de esquema.
 HistorialCambio almacena actor, fecha y diferencias; protegido en la interfaz,
 sin almacenar contraseñas. Usuarios y grupos usan el historial nativo de Django.
 No hay borrado físico de maestros desde la interfaz; las relaciones históricas
@@ -61,5 +61,25 @@ bajo PostgreSQL antes de introducir datos institucionales.
 
 Roles fase 3: Operador obtiene view/add/change_justificacion; Consulta obtiene
 view_justificacion. Administrador conserva todos los permisos de control. No se
-conceden permisos de Excel ni anulación a Operador por defecto. Ejecutar
+concedían en fase 3 permisos de Excel ni anulación a Operador por defecto. Ejecutar
 preparar_roles tras actualizar; no se añade una migración que reasigne cuentas.
+
+## Históricos y Excel — fase 4
+
+Sin campos ni migraciones nuevas. VACACIONES/SINDICAL se consultan en Justificacion
+por TipoOperacion.grupo_especial; no se duplican datos. La duración devuelve None
+sin fechas válidas, incluida protección frente a un rango invertido; no es saldo.
+
+LoteImportacion usa estados SELECCION/PREVIA/CONFIRMADO/CANCELADO/EXPIRADO/ANULADO.
+Datos temporales: mapa, filas interpretadas de fuente, resoluciones, firma, revisión
+y vencimiento. Se vacían tras terminar. La restricción existente SHA/hoja/periodo
+se mantiene; los borradores reciben una hoja provisional hasta la selección real.
+Estado/cantidades/reglas y el evento confirmar_importacion registran el cierre del
+lote. Su auditoría excluye el JSON temporal. La anulación de lote compara updated_at
+de sus fichas con ese evento para impedir deshacer ediciones posteriores.
+
+Justificacion conserva fuente EXCEL, autor, lote/fila/ítem y huella. Las incidencias
+conservan el dato original mínimo de errores o asignaciones manuales discrepantes.
+Operador obtiene importar_excel/exportar_resultados/view_loteimportacion al ejecutar
+preparar_roles; Consulta mantiene lectura. Permisos de anulación siguen restringidos.
+El ORM sigue siendo portable; la ejecución bajo PostgreSQL queda para fase 5.

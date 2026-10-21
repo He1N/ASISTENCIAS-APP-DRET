@@ -370,3 +370,10 @@ dd {
 .consultas-tabla th:nth-child(4), .consultas-tabla td:nth-child(4) { min-width:200px; }
 .consultas-tabla th:last-child, .consultas-tabla td:last-child { min-width:90px; }
 @media(max-width:760px) { .rejilla-filtros { grid-template-columns:1fr; } }
+
+.previa-tabla th, .previa-tabla td { min-width:280px; max-width:500px; }
+.previa-tabla label { display:block; font-weight:600; margin-top:.7rem; }
+.previa-tabla ul { padding-left:1.2rem; }
+.previa-tabla { margin:1rem 0; }
+
+.especiales-tabla td:nth-child(2), .especiales-tabla td:nth-child(3) { white-space:nowrap; min-width:140px; }

@@ -164,7 +164,7 @@ class Justificacion(Fechado):
         return 'Sin determinar' if self.es_registro_tardio is None else ('Tardío' if self.es_registro_tardio else 'Ordinario')
     @property
     def duracion(self):
-        if self.fecha_movimiento and self.fecha_final:
+        if self.fecha_movimiento and self.fecha_final and self.fecha_final >= self.fecha_movimiento:
             return (self.fecha_final - self.fecha_movimiento).days + 1
         return None
     def __str__(self):

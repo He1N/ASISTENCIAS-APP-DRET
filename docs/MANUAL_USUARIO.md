@@ -64,7 +64,8 @@ volver a editar. Guardado y auditoría son una sola transacción.
 Consulta no escribe; Operador crea/edita trabajadores y justificaciones;
 Administrador gestiona maestros y puede anular justificaciones. Las rutas comprueban permisos aun si se invocan directamente. Usuarios,
 grupos y auditoría permanecen en `/admin/`, con los requisitos de acceso de fase 1.
-No hay carga o exportación Excel. Vercel y Neon siguen fuera de este alcance.
+Importación/exportación están disponibles para cuentas autorizadas. Vercel y Neon
+siguen fuera de este alcance.
 
 ## Consultas
 
@@ -123,3 +124,57 @@ Anular requiere permiso específico, motivo y confirmación en una pantalla sepa
 Conserva el registro, actor, fecha y motivo; no se borra ni se edita una ficha anulada.
 No se incluye restauración. Vacaciones muestran únicamente duración calendaria
 informativa si inicio/fin se conocen; no calculan saldos ni descuentos oficiales.
+
+## Vacaciones y Licencias sindicales
+
+Abrir la sección desde el menú. Los resultados se limitan por el grupo especial de
+la operación, no por su nombre literal; no se copian registros a otras tablas.
+Buscar trabajador/DNI/periodo/fechas; en Más filtros están los rangos de fecha final,
+subtipo de operación y otros criterios. Ver registro original abre su detalle.
+Los días son calendario e inclusivos: inicio y fin iguales cuentan 1; sin fechas
+válidas se muestra Sin determinar. No son saldo, días hábiles ni descuentos oficiales,
+incluso para Vacaciones 1/2 Jornada.
+
+## Importar Excel
+
+1. Entrar en Importar Excel, elegir archivo y periodo explícito. Por defecto se
+   inspeccionan encabezados en filas 2/3 y datos desde fila 5. Ajustar filas o letras
+   de columnas en Mapeo si la fuente cambió. Cargar no guarda justificaciones.
+2. Elegir una hoja detectada. OJO no es una hoja de registros y no se importa.
+   Octubre histórico 2026 descarta todos sus CUD; otras hojas conservan CUD si
+   se marca la opción. La excepción se anuncia antes de confirmar.
+3. En la previsualización, revisar filas, mapeo, incidencias y coincidencias.
+   Resolver homónimos por ID o confirmar una ficha nueva. Los catálogos faltantes
+   requieren alta/revisión por Administrador en Catálogos y luego Revisar decisiones.
+   Se puede omitir cualquier fila. Los posibles duplicados se omiten por defecto;
+   solo se incluyen al elegir expresamente que fueron revisados.
+4. Las fechas/horas inválidas bloquean la fila; corregir el archivo y volver a cargar,
+   o dejarla omitida. Un legado sin fechas o con regla final pendiente requiere
+   marcar Aceptar legados incompletos: conserva nulos y genera incidencias.
+   Un movimiento fuera del corte requiere motivo de excepción por fila.
+5. Pulsar Revisar decisiones, comprobar cantidades y luego Confirmar importación
+   revisada. Si se cambian decisiones al confirmar, primero se muestra la revisión
+   nueva sin insertar; confirmar otra vez solo después de revisarla.
+
+La confirmación es transaccional y registra usuario, lote, hoja, fila e ítem. Los
+periodos cerrados/procesados no se reabren. No se inventa recepción ni se marca al
+importado como tardío. Repetir el mismo archivo/hoja/periodo devuelve el lote sin
+reinsertar. Otros archivos con coincidencias requieren revisión; nunca sustituyen
+registros existentes. El archivo original no se conserva; la previa expira a 24 h
+y se purga al confirmar/cancelar. Conservar la fuente por los procedimientos
+institucionales autorizados, fuera del repositorio.
+
+En el resumen se muestran insertadas, omitidas e incidencias. Administrador puede
+anular un lote con motivo solo si sus registros no tuvieron modificaciones
+posteriores; se conserva el historial. Si hubo cambios, revisar/anular cada ficha.
+
+## Exportar Excel
+
+Desde Consultas, Vacaciones, Licencias sindicales o Periodos, aplicar filtros y
+pulsar Exportar Excel. La descarga abarca todas las coincidencias y mantiene fechas,
+horas y códigos textuales. Un filtro inválido devuelve solo encabezados; corregirlo
+en el listado antes de descargar. No es copia de seguridad íntegra de la aplicación.
+
+Administrador/Operador exportan por defecto. Consulta necesita habilitación expresa
+del permiso de exportación y lectura del módulo. La lectura sola no autoriza la
+descarga; importación y anulación también se validan en servidor.

@@ -11,9 +11,9 @@ from openpyxl.utils.exceptions import InvalidFileException
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string, get_column_letter
 from openpyxl.utils.datetime import from_excel
+from django.conf import settings
 from .models import normalizar
 
-MAX_ARCHIVO = 10 * 1024 * 1024
 MAX_DESCOMPRIMIDO = 50 * 1024 * 1024
 MAX_FILAS = 5000
 CAMPOS = {
@@ -36,6 +36,14 @@ ALIASES = {
 
 class ErrorXLSX(ValueError):
     pass
+
+
+def limite_archivo_texto():
+    limite = settings.XLSX_UPLOAD_MAX_BYTES
+    for unidad, divisor in (('MiB', 1024 * 1024), ('MB', 1_000_000)):
+        if limite % divisor == 0:
+            return f'{limite // divisor} {unidad}'
+    return f'{limite} bytes'
 
 
 def texto(celda):
@@ -92,9 +100,10 @@ def mapeo_hoja(ws, fila_encabezado, overrides):
 def leer_archivo(archivo, encabezado=2, primera_fila=5, overrides=None):
     if not archivo.name.lower().endswith('.xlsx'):
         raise ErrorXLSX('Seleccione un archivo .xlsx, sin macros.')
-    raw = archivo.read(MAX_ARCHIVO + 1)
-    if len(raw) > MAX_ARCHIVO:
-        raise ErrorXLSX('El límite del archivo es 10 MB.')
+    limite = settings.XLSX_UPLOAD_MAX_BYTES
+    raw = archivo.read(limite + 1)
+    if len(raw) > limite:
+        raise ErrorXLSX(f'El límite del archivo es {limite_archivo_texto()}.')
     try:
         with ZipFile(BytesIO(raw)) as z:
             info = z.infolist()

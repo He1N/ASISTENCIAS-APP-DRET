@@ -102,7 +102,10 @@ class ReportesTests(TestCase):
             self.assertEqual(self.client.get(reverse(ruta)).status_code,403)
         self.reader.user_permissions.add(Permission.objects.get(codename='exportar_resultados'))
         self.client.force_login(self.reader)
-        response=self.client.get(reverse('exportar_vacaciones'));self.assertEqual(response.status_code,200);response.close()
+        response=self.client.get(reverse('exportar_vacaciones'));self.assertEqual(response.status_code,200)
+        # Consumir la descarga permite al cliente Django cerrar la respuesta
+        # sin disparar close_old_connections dentro del atomic de TestCase.
+        self.assertTrue(b''.join(response.streaming_content))
         u=User.objects.create_user('solo_exportar');u.user_permissions.add(Permission.objects.get(codename='exportar_resultados'))
         self.client.force_login(u)
         self.assertEqual(self.client.get(reverse('exportar_consultas')).status_code,403)

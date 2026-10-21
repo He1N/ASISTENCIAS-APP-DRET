@@ -6,3 +6,10 @@ __pycache__/
 *.xlsx
 staticfiles/
 work/
+.env.*
+!.env.example
+.vercel/
+backups/
+*.dump
+*.backup
+*.sql

@@ -1,0 +1,4 @@
+{% extends 'control/base.html' %}
+{% block content %}<h1>Tamaño excedido</h1>
+<p>La solicitud o el resultado supera el límite del alojamiento. Reduzca el archivo o aplique más filtros y vuelva a intentarlo.</p>
+<p><a href="{% url 'consultas' %}">Ir a Consultas</a> · <a href="{% url 'importar_excel' %}">Ir a Importar Excel</a></p>{% endblock %}

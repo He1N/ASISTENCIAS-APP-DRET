@@ -64,8 +64,8 @@ volver a editar. Guardado y auditoría son una sola transacción.
 Consulta no escribe; Operador crea/edita trabajadores y justificaciones;
 Administrador gestiona maestros y puede anular justificaciones. Las rutas comprueban permisos aun si se invocan directamente. Usuarios,
 grupos y auditoría permanecen en `/admin/`, con los requisitos de acceso de fase 1.
-Importación/exportación están disponibles para cuentas autorizadas. Vercel y Neon
-siguen fuera de este alcance.
+Importación/exportación están disponibles para cuentas autorizadas. La fase 5 prepara Vercel y Neon;
+la publicación y los proyectos externos siguen pendientes.
 
 ## Consultas
 
@@ -178,3 +178,11 @@ en el listado antes de descargar. No es copia de seguridad íntegra de la aplica
 Administrador/Operador exportan por defecto. Consulta necesita habilitación expresa
 del permiso de exportación y lectura del módulo. La lectura sola no autoriza la
 descarga; importación y anulación también se validan en servidor.
+
+## Límites del alojamiento
+
+En la preparación para Vercel se limita la carga XLSX a 4 MB. Si aparece
+«Tamaño excedido», dividir el archivo o reducir los resultados con filtros y
+volver a intentar. La exportación no se trunca. En desarrollo fuera de Vercel
+se conserva el límite de 10 MiB. Migraciones y respaldos corresponden al
+responsable de operación, según DESPLIEGUE.md y RESPALDOS.md.

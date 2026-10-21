@@ -107,3 +107,57 @@ horizontal de página/errores JavaScript. Las tablas tienen desplazamiento propi
 No se validó el workbook real ni la guía OJO completa. Tampoco PostgreSQL,
 concurrencia bajo ese motor, Vercel/Neon, backups ni despliegue. Los límites de formato
 y de revisión se documentan en IMPORTACION_EXCEL.md. No hay datos reales en pruebas.
+
+## Fase 5 — preparación de producción
+
+Python 3.12, Django 5.2.18 y las versiones de requirements.txt. Se ejecutaron
+**93 pruebas completas en SQLite y 93 en PostgreSQL 17.11**, en una instancia
+Docker local desechable con credenciales y datos sintéticos. PostgreSQL aplicó
+todas las migraciones desde cero; `makemigrations --check --dry-run` no detectó
+cambios en ambos motores y `migrate --check` confirmó el esquema al día. No se
+crean modelos ni migraciones en este PR. `pip check` sin dependencias rotas.
+
+Las 12 pruebas nuevas cubren configuración aislada de desarrollo/producción,
+rechazo de SQLite/hosts comodín/DEBUG/TLS inseguro en producción, URL inválida sin
+exposición de secretos, opciones de pooling, límites compartidos de formulario y
+parser, rechazo HTTP de entradas/resultados excesivos y cierre de descargas sin
+truncarlas; respaldo privado, checksum, no sobrescritura, limpieza de archivos
+parciales, rechazo de checksum alterado, pooler y destino de restauración ocupado.
+Se corrigió una prueba de exportación anterior para consumir el streaming con el
+cliente Django, evitando cerrar la conexión dentro del atomic de TestCase al usar
+CONN_MAX_AGE=0 en PostgreSQL. No se cambió la lógica de permisos ni los modelos.
+
+Se ejecutaron `check --deploy --fail-level ERROR` y `collectstatic --noinput` con
+DEBUG=False, VERCEL=1 y una URL PostgreSQL en un puerto sin servidor. Confirmaron
+que preparar estáticos no necesita conectarse ni ejecutar migraciones. Se generó
+el manifiesto, CSS/JS con hash y estáticos de Admin. check --deploy muestra solo
+W005/W021: includeSubDomains y preload de HSTS permanecen desactivados hasta
+conocer el dominio y su política. Los avisos no se silencian.
+
+En producción local, PostgreSQL aceptó conexiones TLS (certificado autofirmado
+exclusivo del ensayo, sslmode=require). Cliente Django con CSRF obligatorio:
+login, consulta autenticada, cookie de sesión Secure/HttpOnly, cookie CSRF Secure,
+HSTS de 3600 s, DENY, nosniff y CSS con hash servido por WhiteNoise. Comprobación
+SQL de pg_stat_ssl confirmó cifrado en la conexión usada por la app.
+
+Chromium/Playwright sobre HTTPS local con DEBUG=False y PostgreSQL/TLS: login con
+CSRF, consultas, descarga y lectura XLSX con openpyxl, CSS con hash, cookie segura,
+formulario con máximo 4 MB y rechazo de un archivo de 4.000.001 bytes, logout y
+sin errores JavaScript. El proxy se simuló con X-Forwarded-Proto=https; no es una
+prueba de infraestructura Vercel. El estado 413 por cuerpo completo y por respuesta
+excesiva se verificó mediante las pruebas automatizadas del middleware.
+
+Respaldo/restauración real con clientes pg_dump/pg_restore 17.11 y el script de
+RESPALDOS.md: formato custom con checksum y permisos 0600, restaurado en una base
+vacía separada, comparando contenido completo de **18 tablas**, incluidas
+migraciones, usuarios/grupos y auditoría. Se rechazó repetir la restauración sobre
+el destino ocupado. Todo el ensayo usó datos sintéticos, fuera del repositorio.
+
+La matriz CI ejecuta SQLite/PostgreSQL 17, migraciones, suite y preparación de
+estáticos/seguridad. El resultado remoto debe revisarse en el PR.
+
+Pendientes: primer build y despliegue reales en Vercel, conexión Neon con su CA y
+pooler real, región/latencia/límites temporales del proveedor, ensayo de escrituras
+simultáneas, programación institucional de respaldos/purga y recuperación del
+servicio real. No se crearon proyectos externos, cron, cuentas institucionales ni
+se procesaron datos reales. Sigue pendiente la revisión del workbook y OJO reales.

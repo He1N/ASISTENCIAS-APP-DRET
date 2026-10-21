@@ -1,17 +1,44 @@
-name: Django SQLite
+name: Django SQLite y PostgreSQL
 on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        database: [sqlite, postgres]
+    services:
+      postgres:
+        image: postgres:17-bookworm
+        env:
+          POSTGRES_DB: dret_ci
+          POSTGRES_USER: dret_ci
+          POSTGRES_PASSWORD: synthetic-ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U dret_ci -d dret_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       DEBUG: 'True'
+      DATABASE_URL: ${{ matrix.database == 'postgres' && 'postgresql://dret_ci:synthetic-ci-only@127.0.0.1:5432/dret_ci?sslmode=disable' || '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version-file: .python-version
       - run: pip install -r requirements.txt
       - run: python manage.py check
       - run: python manage.py makemigrations --check --dry-run
       - run: python manage.py migrate --noinput
       - run: python manage.py test
+      - name: Configuración de producción y estáticos (sin conexión a base)
+        env:
+          DEBUG: 'False'
+          VERCEL: '1'
+          SECRET_KEY: synthetic-ci-only-key-0123456789abcdefghijklmnopqrstuvwxyz-DO-NOT-USE
+          ALLOWED_HOSTS: asistencias.example.org
+          CSRF_TRUSTED_ORIGINS: https://asistencias.example.org
+          DATABASE_URL: postgresql://synthetic:synthetic@127.0.0.1:1/dret?sslmode=require
+        run: |
+          python manage.py check --deploy --fail-level ERROR
+          python manage.py collectstatic --noinput

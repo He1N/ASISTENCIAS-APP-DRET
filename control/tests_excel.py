@@ -212,6 +212,38 @@ class ExcelTests(TestCase):
         call_command('purgar_previsualizaciones',stdout=StringIO())
         lote.refresh_from_db();self.assertEqual(lote.estado,'EXPIRADO');self.assertEqual(lote.datos_temporales,{})
 
+    def test_purga_programada_respeta_limite_y_conserva_historial(self):
+        confirmado = self.confirmar(self.borrador())
+        ahora = timezone.now()
+        temporales = []
+        for indice, (estado, edad) in enumerate([
+            ('SELECCION', timedelta(hours=25)),
+            ('PREVIA', timedelta(hours=25)),
+            ('PREVIA', timedelta(hours=24)),
+            ('PREVIA', timedelta(hours=23)),
+        ]):
+            lote = LoteImportacion.objects.create(
+                archivo_nombre='sintetico.xlsx', checksum=str(indice), hoja='REGISTROS',
+                periodo=confirmado.periodo, usuario=confirmado.usuario,
+                estado=estado, datos_temporales={'sintetico': True})
+            LoteImportacion.objects.filter(pk=lote.pk).update(fecha=ahora-edad)
+            temporales.append(lote)
+        LoteImportacion.objects.filter(pk=confirmado.pk).update(fecha=ahora-timedelta(days=2))
+        registros = list(Justificacion.objects.values())
+        historial = list(HistorialCambio.objects.values())
+        with patch('control.management.commands.purgar_previsualizaciones.timezone.now', return_value=ahora):
+            for _ in range(2):
+                call_command('purgar_previsualizaciones', stdout=StringIO())
+        for indice, lote in enumerate(temporales):
+            lote.refresh_from_db()
+            self.assertEqual(lote.estado, 'EXPIRADO' if indice < 2 else 'PREVIA')
+            self.assertEqual(lote.datos_temporales, {} if indice < 2 else {'sintetico': True})
+        confirmado.refresh_from_db()
+        self.assertEqual(confirmado.estado, 'CONFIRMADO')
+        self.assertEqual(LoteImportacion.objects.count(), 5)
+        self.assertEqual(list(Justificacion.objects.values()), registros)
+        self.assertEqual(list(HistorialCambio.objects.values()), historial)
+
     def test_permisos_idor_y_csrf_importacion(self):
         lote=self.borrador()
         self.login('Consulta')

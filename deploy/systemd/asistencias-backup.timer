@@ -1,0 +1,11 @@
+[Unit]
+Description=Programar respaldo diario de asistencias
+
+[Timer]
+OnCalendar=*-*-* 07:45:00 UTC
+Persistent=true
+RandomizedDelaySec=300
+Unit=asistencias-backup.service
+
+[Install]
+WantedBy=timers.target

@@ -161,3 +161,29 @@ pooler real, región/latencia/límites temporales del proveedor, ensayo de escri
 simultáneas, programación institucional de respaldos/purga y recuperación del
 servicio real. No se crearon proyectos externos, cron, cuentas institucionales ni
 se procesaron datos reales. Sigue pendiente la revisión del workbook y OJO reales.
+
+
+## Confirmación de operación — 29/10/2026
+
+El responsable confirmó despliegue Vercel + Neon, carga de datos y funcionamiento
+correcto en https://asistencias-app-dret.vercel.app. Los pendientes de primer
+despliegue indicados en las fases anteriores son históricos y quedan superados
+por esta confirmación. El diseño se mejorará en una etapa posterior.
+
+En la revisión del repositorio se ejecutaron 93 pruebas SQLite aprobadas,
+`manage.py check` sin incidencias y `makemigrations --check --dry-run` sin cambios.
+No se accedió a datos reales ni se ensayó recuperación productiva. El éxito de la
+carga no confirma por sí mismo la revisión completa de OJO ni la concurrencia.
+La activación de tareas, el destino de copias y el primer ensayo real deben
+registrarse según MANTENIMIENTO.md.
+
+### Automatización de mantenimiento
+
+Tras esta actualización: 94 pruebas SQLite aprobadas, incluida purga repetible
+que respeta el límite estricto de 24 horas y conserva justificaciones, lotes
+confirmados y auditoría. `check` sin incidencias y `makemigrations --check
+--dry-run` sin cambios. `bash -n scripts/backup_diario.sh` correcto; horario
+systemd interpretado como 07:45 UTC. No se pudo validar el servicio completo con
+`systemd-analyze verify` en este entorno (SO_PASSCRED: Operation not permitted).
+No se ejecutó el workflow en producción ni se instaló el timer; no se creó una
+copia real ni se restauraron datos institucionales.

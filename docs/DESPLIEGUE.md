@@ -1,7 +1,10 @@
-# Fase 5 — Preparación de Vercel y Neon
+# Despliegue en Vercel y Neon
 
-Esta fase prepara el código; no crea proyectos ni publica la aplicación. Usar
-primero datos sintéticos. Los datos laborales reales requieren autorización
+El responsable confirmó el 29/10/2026 que la aplicación está desplegada en
+https://asistencias-app-dret.vercel.app, conectada a Neon, con datos cargados y
+funcionamiento correcto. Las instrucciones siguientes sirven para reinstalación
+y mantenimiento; no recrear ni vaciar la base en servicio. Para ensayos usar
+datos sintéticos. Los datos laborales reales requieren autorización
 institucional según ESPECIFICACION.md. Resultado de las pruebas en VALIDACION.md.
 
 ## Entornos y variables
@@ -39,7 +42,7 @@ pooling de transacciones. No se consulta la base al importar settings/compilar.
 La base contiene sesiones, lotes temporales, registros y auditoría. No hay
 adjuntos persistidos en disco; los temporales de Excel son efímeros.
 
-## Preparar los proyectos, después de revisar y fusionar el PR
+## Referencia para una instalación nueva
 
 1. Crear en Neon un proyecto y una base de producción vacía (PostgreSQL 17 es el
    major ensayado). Guardar por separado conexión pooled y directa. Elegir región
@@ -158,10 +161,11 @@ CREATEDB, nunca credenciales productivas. CI ejecuta la suite con SQLite y un
 servicio PostgreSQL 17. Cada job revisa también seguridad y collectstatic sin base.
 
 El responsable de operación debe ejecutar diariamente desde un entorno protegido:
-`python manage.py purgar_previsualizaciones` (caducidad de 24 horas). No se ha
-creado un cron externo. Asignar responsable de respaldos, revisar accesos y
-ensayar restauraciones. Neon/TLS/PgBouncer y el primer despliegue siguen
-pendientes de validación contra los proyectos reales.
+`python manage.py purgar_previsualizaciones` (caducidad de 24 horas). La definición
+diaria de GitHub Actions y el temporizador de respaldo están preparados; su
+activación y seguimiento se detallan en MANTENIMIENTO.md. El funcionamiento real
+fue confirmado por el responsable; la revisión independiente de TLS/pooling,
+concurrencia y recuperación sigue sin verificarse en este entorno.
 
 Referencias oficiales consultadas:
 - https://vercel.com/docs/frameworks/full-stack/django

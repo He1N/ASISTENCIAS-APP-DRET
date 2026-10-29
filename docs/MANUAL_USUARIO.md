@@ -64,8 +64,9 @@ volver a editar. Guardado y auditoría son una sola transacción.
 Consulta no escribe; Operador crea/edita trabajadores y justificaciones;
 Administrador gestiona maestros y puede anular justificaciones. Las rutas comprueban permisos aun si se invocan directamente. Usuarios,
 grupos y auditoría permanecen en `/admin/`, con los requisitos de acceso de fase 1.
-Importación/exportación están disponibles para cuentas autorizadas. La fase 5 prepara Vercel y Neon;
-la publicación y los proyectos externos siguen pendientes.
+Importación/exportación están disponibles para cuentas autorizadas. La aplicación está en servicio en
+https://asistencias-app-dret.vercel.app con Vercel y Neon, según confirmación del
+responsable del 29/10/2026. El mantenimiento se detalla en MANTENIMIENTO.md.
 
 ## Consultas
 

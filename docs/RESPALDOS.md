@@ -67,8 +67,10 @@ sintéticos y comprobó el rechazo de un destino ya ocupado.
 Como punto de partida operativo: copia diaria y antes de cambios, 30 días de
 retención y ensayo mensual; el responsable institucional debe ajustar y aprobar
 estos valores según las necesidades de pérdida máxima de datos y recuperación.
-No hay programación automática incorporada: asignar un entorno protegido y
-verificar el resultado de cada ejecución. Revisar también la retención/PITR del
+Se incluyen un servicio y temporizador systemd diarios para un equipo protegido
+con almacenamiento persistente. Instalación y seguimiento en MANTENIMIENTO.md.
+Su presencia en el repositorio no significa que estén instalados o activos.
+Verificar el resultado de cada ejecución. Revisar también la retención/PITR del
 plan de Neon; no se asume que un plan incluya una ventana determinada.
 
 Para recuperación real: detener escrituras, preservar el estado actual, elegir

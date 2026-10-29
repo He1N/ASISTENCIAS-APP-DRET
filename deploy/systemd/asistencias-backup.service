@@ -1,0 +1,19 @@
+[Unit]
+Description=Respaldo diario de asistencias PostgreSQL
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=asistencias-backup
+Group=asistencias-backup
+WorkingDirectory=/opt/asistencias
+EnvironmentFile=/etc/asistencias/mantenimiento.env
+ExecStart=/bin/bash /opt/asistencias/scripts/backup_diario.sh
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/asistencias-backups
+TimeoutStartSec=30min

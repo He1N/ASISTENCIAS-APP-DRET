@@ -2,7 +2,9 @@
 
 Implementación de fases 1 a 5 (maestros, justificaciones, consultas e históricos) conforme a `ESPECIFICACION.md` y `AGENTS.md`.
 Python 3.12 y Django 5.2 LTS. SQLite local y PostgreSQL mediante DATABASE_URL.
-Configuración preparada para Vercel/Neon; no se ha desplegado ni creado proyectos.
+En servicio en https://asistencias-app-dret.vercel.app con Vercel y Neon.
+El 29/10/2026 el responsable confirmó despliegue, carga de datos y funcionamiento.
+Esta confirmación no sustituye un ensayo de recuperación ni una revisión de OJO.
 Guías: [despliegue y migraciones](docs/DESPLIEGUE.md), [respaldos](docs/RESPALDOS.md).
 
 ## Ejecutar localmente (Bash)
@@ -124,8 +126,8 @@ los grupos; revisar asignaciones institucionales antes de aplicarlo en una base 
 
 ## Pendiente
 
-Pendientes: primer despliegue y comprobación en Vercel/Neon, operación de
-respaldos y ensayos de concurrencia simultánea. El XLSX real y las reglas completas de OJO siguen pendientes
+Pendientes: activación y verificación del mantenimiento automático, ensayo de
+recuperación con una copia real y ensayos de concurrencia simultánea. El XLSX real y las reglas completas de OJO siguen pendientes
 de revisión; no se afirma haber validado esos documentos. No hay borrado físico ni
 restauración de registros anulados.
 El aviso por versión de esta fase cubre formularios web abiertos antes de otra
@@ -151,8 +153,10 @@ la fuente; los legados incompletos requieren aceptación explícita. Cada operac
 usa su grupo configurable para aparecer en Vacaciones o Licencias sindicales.
 
 Las previsualizaciones contienen datos temporales con caducidad de 24 horas;
-confirmar/cancelar los purga. Ejecutar periódicamente (programación de despliegue
-pendiente):
+confirmar/cancelar los purga. La tarea diaria de GitHub Actions está definida en
+`.github/workflows/mantenimiento.yml`; se activa al integrarla en la rama por
+defecto y disponer del secreto `NEON_DATABASE_URL`. Ver
+[activación y seguimiento](docs/MANTENIMIENTO.md). También puede ejecutarse manualmente:
 
 ```bash
 python manage.py purgar_previsualizaciones
@@ -162,3 +166,9 @@ Exportar Excel descarga **todas** las filas filtradas, no solo la página visibl
 Consulta no exporta por defecto; un administrador puede habilitar el permiso
 `exportar_resultados` específicamente. Se exige además lectura del módulo.
 Detalles, límites y supuestos: [Importación Excel](docs/IMPORTACION_EXCEL.md).
+
+## Operación y mejoras
+
+La actualización de diseño queda para una etapa posterior. El estado confirmado,
+la activación de las tareas y el registro de verificación se describen en
+[Operación y mantenimiento](docs/MANTENIMIENTO.md).

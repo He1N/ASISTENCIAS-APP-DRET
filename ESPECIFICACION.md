@@ -238,3 +238,27 @@ Escribir pruebas automatizadas Django de modelos, formularios, permisos, importa
 ## 13. Decisiones que **no** están confirmadas
 
 No inventar ni ocultar: (a) fecha final del periodo noviembre; (b) reglas administrativas para descuentos de vacaciones/sindicales y medio día; (c) criterios exactos de cierre/procesamiento en sistema externo; (d) catálogo completo de códigos ajenos al Excel; (e) qué empleados tienen qué áreas o DNI cuando falta; (f) autorización de alojamiento de datos reales en servicios externos. Implementar comportamiento conservador, dejar configuración o notas explícitas y no frenar el MVP por estos puntos.
+
+## 14. Ampliación autorizada: control de vacaciones (01/11/2026)
+
+El responsable solicita incorporar el histórico y las asignaciones anuales del
+control vacacional, permitir editar y cancelar/anular con auditoría, y visualizar
+el resumen y detalle. Exportar general o por trabajador con las mismas dos hojas
+y diseño del Excel de referencia. No usar las fichas YURI/JULCA/SALLUCA.
+Asignaciones y habilitación explícitas; no todos los trabajadores tienen derecho
+ni se conceden días automáticamente. Consumir primero los años más antiguos.
+No crear saldos negativos ni ocultar las inconsistencias del histórico. El código
+88 sigue sin regla confirmada: conservar cantidades originales con incidencia,
+sin extrapolar una regla. Esta ampliación sustituye la exclusión anterior de
+saldos solo para el control expresamente solicitado. Ver docs/CONTROL_VACACIONES.md.
+
+Aclaración posterior del responsable: por ahora el control vacacional es
+independiente y usa solo los datos del Excel. No sumar, sincronizar ni cruzar con
+justificaciones o trabajadores de asistencias hasta una revisión posterior.
+Las validaciones de saldo se limitan al control independiente.
+
+Ajuste posterior de interfaz: quitar mensajes y requisitos de revisión individual,
+permitir exportar directamente los datos del Excel, añadir búsqueda y acciones
+por fila (editar y eliminar con iconos), y estructurar las tablas con un plugin
+local. Eliminar es lógico y auditado. La exportación preserva los valores
+históricos sin inventar correcciones para saldos inconsistentes.

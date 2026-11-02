@@ -8,7 +8,7 @@
   <div class="acciones"><button type="submit">Buscar</button><a href="{% url 'consultas' %}">Limpiar filtros</a></div>
 </form>
 <p class="conteo">{{ pagina.paginator.count }} coincidencia{{ pagina.paginator.count|pluralize:'s' }}</p>
-<div class="tabla consultas-tabla"><table><caption class="solo-lector">Justificaciones de asistencia</caption><thead><tr>
+<div class="tabla consultas-tabla"><table class="table table-hover dret-table" data-toggle="table" data-classes="table table-hover dret-table" data-pagination="false" data-search="false"><caption class="solo-lector">Justificaciones de asistencia</caption><thead><tr>
   <th scope="col">Fecha de movimiento</th><th scope="col">Trabajador</th><th scope="col">Documento</th><th scope="col">Operación</th><th scope="col">Intervalo / horas</th><th scope="col">Periodo</th><th scope="col">CUD</th><th scope="col">Plazo / estado</th><th scope="col">Acción</th>
 </tr></thead><tbody>
 {% for fila in filas %}{% with obj=fila.obj %}<tr>

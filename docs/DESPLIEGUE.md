@@ -137,7 +137,29 @@ python manage.py createsuperuser
 preparar_roles restablece los permisos de los grupos: revisar antes de repetirlo
 si hubo ajustes institucionales. Crear un segundo administrador individual y
 probar su acceso. No ejecutar crear_datos_sinteticos en una base institucional.
-En este PR no hay migraciones nuevas; al actualizar desde fase 4, migrate es no-op.
+La fase 5 no añadía migraciones; la actualización del control vacacional sí añade
+`control.0003_cuentavacacion_movimientovacacion` y `control.0004_cuentavacacion_eliminada`.
+Son aditivas: crean dos tablas y el indicador de baja lógica, sin modificar los
+registros anteriores de trabajadores o justificaciones. Aplicarlas antes de
+publicar el código que muestra el nuevo módulo.
+
+Para esta actualización, agregar permisos sin restablecer los ajustes anteriores:
+
+```bash
+python manage.py preparar_roles --solo-vacaciones
+```
+
+La carga institucional del control se realiza desde la terminal autorizada,
+con la conexión directa y después de verificar el respaldo:
+
+```bash
+python manage.py importar_control_vacaciones /ruta/privada/control.xlsx --usuario administrador
+python manage.py importar_control_vacaciones /ruta/privada/control.xlsx --usuario administrador --confirmar
+```
+
+No crear ni copiar `admin_local` a producción. No subir el Excel, los secretos,
+respaldos o archivos de `work/` al repositorio. Vercel excluye explícitamente
+esas rutas del paquete. El layout versionado contiene solo estilos y encabezados.
 
 Desplegar el commit revisado, comprobar los flujos y habilitar escrituras. Si
 falla el cambio: mantener las escrituras suspendidas y analizar compatibilidad

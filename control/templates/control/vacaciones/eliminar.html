@@ -1,0 +1,5 @@
+{% extends 'control/vacaciones/base.html' %}{% block content %}
+<section class="vacaciones-ui"><a href="{% url 'vacacion_lista' %}">Volver</a><h1>Eliminar registro</h1>
+<div class="vac-panel"><p>¿Eliminar {% if movimiento %}este movimiento de{% else %}la ficha de{% endif %} <strong>{{ cuenta.nombre }}</strong>?</p><p>Se retirará de los datos vigentes y de las exportaciones. El historial se conserva.</p>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}<form method="post">{% csrf_token %}<input type="hidden" name="version" value="{{ version }}"><div class="acciones"><button class="vac-danger" type="submit">{% include 'control/vacaciones/icono.html' with nombre='eliminar' %} Eliminar</button><a href="{% url 'vacacion_lista' %}">Cancelar</a></div></form></div></section>
+{% endblock %}

@@ -4,7 +4,7 @@
   "functions": {
     "config/wsgi.py": {
       "maxDuration": 60,
-      "excludeFiles": "{docs/**,control/tests*.py,**/*.sqlite3,**/*.xlsx,**/*.dump,.env*}"
+      "excludeFiles": "{docs/**,control/tests*.py,work/**,backups/**,.venv/**,.git/**,**/*.sqlite3,**/*.xlsx,**/*.dump,**/*.backup,**/*.sql,.env*}"
     }
   }
 }

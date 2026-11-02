@@ -22,7 +22,18 @@ urlpatterns += [
 ]
 
 from . import excel_views, reportes
+from . import vacaciones_views as vacaciones_control
 urlpatterns += [
+    path('control-vacaciones/', vacaciones_control.lista, name='vacacion_lista'),
+    path('control-vacaciones/nuevo/', vacaciones_control.editar, name='vacacion_nueva'),
+    path('control-vacaciones/exportar/', vacaciones_control.exportar, name='vacacion_exportar'),
+    path('control-vacaciones/<int:pk>/', vacaciones_control.ficha, name='vacacion_ficha'),
+    path('control-vacaciones/<int:pk>/exportar/', vacaciones_control.exportar, name='vacacion_exportar_individual'),
+    path('control-vacaciones/<int:pk>/editar/', vacaciones_control.editar, name='vacacion_editar'),
+    path('control-vacaciones/<int:pk>/eliminar/', vacaciones_control.eliminar, name='vacacion_eliminar'),
+    path('control-vacaciones/<int:pk>/movimiento/<int:movimiento>/eliminar/', vacaciones_control.eliminar, name='vacacion_movimiento_eliminar'),
+    path('control-vacaciones/<int:pk>/nuevo/', vacaciones_control.editar, {'nuevo':True}, name='vacacion_movimiento_nuevo'),
+    path('control-vacaciones/<int:pk>/movimiento/<int:movimiento>/', vacaciones_control.editar, name='vacacion_movimiento_editar'),
     path('vacaciones/', reportes.especiales, {'grupo': 'VACACIONES'}, name='vacaciones'),
     path('licencias-sindicales/', reportes.especiales, {'grupo': 'SINDICAL'}, name='sindicales'),
     path('vacaciones/exportar/', reportes.especiales, {'grupo': 'VACACIONES', 'exportar': True}, name='exportar_vacaciones'),

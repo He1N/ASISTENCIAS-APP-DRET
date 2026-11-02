@@ -190,3 +190,43 @@ class HistorialCambio(models.Model):
     class Meta:
         ordering = ['-fecha', '-pk']
         default_permissions = ('view',)
+
+
+class CuentaVacacion(Fechado):
+    """Derechos explícitos; no se deducen del contrato ni del estado del trabajador."""
+    trabajador = models.OneToOneField(Trabajador, null=True, blank=True, on_delete=models.PROTECT)
+    dni = models.CharField(max_length=20, unique=True)
+    nombre = models.CharField(max_length=250)
+    tipo = models.CharField(max_length=40, blank=True)
+    estado = models.CharField(max_length=40, blank=True)
+    habilitada = models.BooleanField(default=True)
+    eliminada = models.BooleanField(default=False, editable=False)
+    asignaciones = models.JSONField(default=dict)
+    origen = models.JSONField(default=dict, editable=False)
+    notas = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['nombre', 'pk']
+
+    def __str__(self):
+        return self.nombre
+
+
+class MovimientoVacacion(Fechado):
+    cuenta = models.ForeignKey(CuentaVacacion, on_delete=models.PROTECT, related_name='movimientos')
+    periodo = models.CharField(max_length=40, blank=True)
+    codigo = models.CharField(max_length=40)
+    fecha = models.DateField(null=True, blank=True)
+    inicio = models.DateField(null=True, blank=True)
+    fin = models.DateField(null=True, blank=True)
+    dias = models.DecimalField(max_digits=9, decimal_places=2, null=True, blank=True)
+    permiso_ley = models.DecimalField(max_digits=9, decimal_places=2, default=0)
+    observaciones = models.TextField(blank=True)
+    estado = models.CharField(max_length=12, choices=[('VIGENTE','Vigente'),('ANULADO','Anulado'),('CANCELADO','Cancelado')], default='VIGENTE')
+    pendiente_revision = models.BooleanField(default=False)
+    motivo = models.TextField(blank=True)
+    origen_clave = models.CharField(max_length=100, unique=True, null=True, blank=True, editable=False)
+    origen = models.JSONField(default=dict, editable=False)
+
+    class Meta:
+        ordering = ['inicio', 'pk']

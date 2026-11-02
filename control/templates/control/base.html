@@ -1,26 +1,46 @@
 {% load static %}<!doctype html>
 <html lang="es-PE">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="{% static 'control/brand.svg' %}">
 <title>{% block title %}{{ titulo|default:"Acceso" }}{% endblock %} · DRET</title>
+<link rel="stylesheet" href="{% static 'control/vendor/bootstrap-5.3.8.min.css' %}">
+<link rel="stylesheet" href="{% static 'control/vendor/bootstrap-table-1.27.3.min.css' %}">
+{% block vendor_css %}{% endblock %}
 <link rel="stylesheet" href="{% static 'control/app.css' %}"></head>
-<body><a class="saltar" href="#contenido">Saltar al contenido</a>
-<header><span class="identidad">DRET <span>Control de Asistencias</span></span>
+<body class="app-shell"><a class="saltar" href="#contenido">Saltar al contenido</a>
+<header><a class="identidad marca-dret" href="{% url 'inicio' %}" aria-label="DRET · Inicio"><img src="{% static 'control/brand.svg' %}" alt="" width="36" height="36"><span class="marca-texto"><strong>DRET</strong><span>Control de Asistencias</span></span></a>
 {% if user.is_authenticated %}<div class="sesion"><span>{{ user.get_username }}</span><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="secundario" type="submit">Cerrar sesión</button></form></div>{% endif %}</header>
 <div class="estructura {% if not user.is_authenticated %}acceso{% endif %}">
 {% if user.is_authenticated %}<aside><nav aria-label="Navegación principal">
-<details open><summary>Menú</summary><div class="enlaces">
+<details class="nav-menu" open><summary>Menú</summary><div class="enlaces">
+{% if perms.control.view_justificacion or perms.control.add_justificacion or perms.control.view_trabajador %}
+<details class="nav-group" data-nav-group="asistencias" {% if tipo == 'justificaciones' or tipo == 'trabajadores' %}open{% endif %}><summary id="nav-asistencias">{% include 'control/nav_icono.html' with nombre='asistencias' %}<span>Asistencias</span><svg class="nav-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></summary><div class="nav-group-links">
 {% if perms.control.view_justificacion %}<a href="{% url 'consultas' %}" {% if tipo == 'justificaciones' %}aria-current="page"{% endif %}>Consultas</a>{% endif %}
 {% if perms.control.add_justificacion %}<a href="{% url 'justificacion_nueva' %}">Nueva justificación</a>{% endif %}
-{% if perms.control.view_justificacion %}<a href="{% url 'vacaciones' %}" {% if tipo == 'vacaciones' %}aria-current="page"{% endif %}>Vacaciones</a><a href="{% url 'sindicales' %}" {% if tipo == 'sindicales' %}aria-current="page"{% endif %}>Licencias sindicales</a>{% endif %}
-{% if perms.control.importar_excel %}<a href="{% url 'importar_excel' %}" {% if tipo == 'importar' %}aria-current="page"{% endif %}>Importar Excel</a>{% endif %}
 {% if perms.control.view_trabajador %}<a href="{% url 'maestro_lista' tipo='trabajadores' %}" {% if tipo == 'trabajadores' %}aria-current="page"{% endif %}>Trabajadores</a>{% endif %}
-{% if perms.control.view_tipodocumento or perms.control.view_tipooperacion %}<span class="grupo">Catálogos</span>{% endif %}
+</div></details>{% endif %}
+{% if perms.control.view_cuentavacacion or perms.control.view_justificacion %}
+<details class="nav-group" data-nav-group="vacaciones" {% if tipo == 'control_vacaciones' or tipo == 'vacaciones' or tipo == 'sindicales' %}open{% endif %}><summary id="nav-vacaciones">{% include 'control/nav_icono.html' with nombre='vacaciones' %}<span>Vacaciones y licencias</span><svg class="nav-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></summary><div class="nav-group-links">
+{% if perms.control.view_cuentavacacion %}<a href="{% url 'vacacion_lista' %}" {% if tipo == 'control_vacaciones' %}aria-current="page"{% endif %}>Control de vacaciones <small>Excel independiente</small></a>{% endif %}
+{% if perms.control.view_justificacion %}<a href="{% url 'vacaciones' %}" {% if tipo == 'vacaciones' %}aria-current="page"{% endif %}>Registros de vacaciones</a><a href="{% url 'sindicales' %}" {% if tipo == 'sindicales' %}aria-current="page"{% endif %}>Licencias sindicales</a>{% endif %}
+</div></details>{% endif %}
+{% if perms.control.view_periodoasistencia or perms.control.importar_excel %}
+<details class="nav-group" data-nav-group="gestion" {% if tipo == 'periodos' or tipo == 'importar' %}open{% endif %}><summary id="nav-gestion">{% include 'control/nav_icono.html' with nombre='gestion' %}<span>Gestión</span><svg class="nav-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></summary><div class="nav-group-links">
+{% if perms.control.view_periodoasistencia %}<a href="{% url 'maestro_lista' tipo='periodos' %}" {% if tipo == 'periodos' %}aria-current="page"{% endif %}>Periodos</a>{% endif %}
+{% if perms.control.importar_excel %}<a href="{% url 'importar_excel' %}" {% if tipo == 'importar' %}aria-current="page"{% endif %}>Importar Excel</a>{% endif %}
+</div></details>{% endif %}
+{% if perms.control.view_tipodocumento or perms.control.view_tipooperacion or user.is_staff and perms.auth.view_user %}
+<details class="nav-group" data-nav-group="configuracion" {% if tipo == 'documentos' or tipo == 'operaciones' %}open{% endif %}><summary id="nav-configuracion">{% include 'control/nav_icono.html' with nombre='configuracion' %}<span>Configuración</span><svg class="nav-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></summary><div class="nav-group-links">
 {% if perms.control.view_tipodocumento %}<a href="{% url 'maestro_lista' tipo='documentos' %}" {% if tipo == 'documentos' %}aria-current="page"{% endif %}>Tipos de documento</a>{% endif %}
 {% if perms.control.view_tipooperacion %}<a href="{% url 'maestro_lista' tipo='operaciones' %}" {% if tipo == 'operaciones' %}aria-current="page"{% endif %}>Tipos de operación</a>{% endif %}
-{% if perms.control.view_periodoasistencia %}<a href="{% url 'maestro_lista' tipo='periodos' %}" {% if tipo == 'periodos' %}aria-current="page"{% endif %}>Periodos</a>{% endif %}
-{% if user.is_staff and perms.auth.view_user %}<a href="{% url 'admin:auth_user_changelist' %}">Usuarios (administración)</a>{% endif %}
+{% if user.is_staff and perms.auth.view_user %}<a href="{% url 'admin:auth_user_changelist' %}">Usuarios</a>{% endif %}
+</div></details>{% endif %}
 </div></details></nav></aside>{% endif %}
 <main id="contenido" tabindex="-1">
 {% if messages %}<div aria-live="polite">{% for message in messages %}<p class="mensaje">{{ message }}</p>{% endfor %}</div>{% endif %}
 {% block content %}{% endblock %}
-</main></div></body></html>
+</main></div>
+<script src="{% static 'control/vendor/jquery-3.7.1.min.js' %}"></script>
+<script src="{% static 'control/vendor/bootstrap-table-1.27.3.min.js' %}"></script>
+<script src="{% static 'control/navigation.js' %}" defer></script>
+{% block scripts %}{% endblock %}</body></html>

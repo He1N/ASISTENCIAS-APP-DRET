@@ -17,11 +17,14 @@ class RespaldoTests(SimpleTestCase):
                 self.assertNotIn('synthetic', ' '.join(args))
                 self.assertNotIn('PGPASSWORD', kwargs['env'])
                 passfile = Path(kwargs['env']['PGPASSFILE'])
-                self.assertEqual(passfile.stat().st_mode & 0o777, 0o600)
+                # Windows usa ACL: st_mode no representa permisos POSIX 0600.
+                if os.name == 'posix':
+                    self.assertEqual(passfile.stat().st_mode & 0o777, 0o600)
                 kwargs['stdout'].write(b'respaldo sintetico')
             with patch('scripts.postgres_backup.subprocess.run', side_effect=dump):
                 execute(path)
-            self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+            if os.name == 'posix':
+                self.assertEqual(path.stat().st_mode & 0o777, 0o600)
             self.assertEqual(path.with_name(path.name + '.sha256').read_text().strip(), checksum(path))
             with self.assertRaises(ValueError):
                 execute(path)

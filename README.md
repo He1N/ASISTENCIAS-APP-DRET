@@ -1,5 +1,18 @@
 # Control de Asistencias — DRET
 
+Actualización: control vacacional independiente del registro de asistencias,
+con asignaciones editables, movimientos auditados, exportación general/individual
+en dos hojas y navegación agrupada. Ver [control vacacional](docs/CONTROL_VACACIONES.md).
+Esta actualización añade las migraciones `0003` y `0004`: aplicarlas antes de
+publicar el código nuevo. Los datos del Excel se cargan por separado, nunca desde
+Git ni durante el build. Para incorporar permisos sin reemplazar ajustes previos:
+`python manage.py preparar_roles --solo-vacaciones`.
+
+Validación de esta actualización: 114 pruebas en SQLite y PostgreSQL 18,
+`check`, migraciones consistentes y `collectstatic` en configuración de producción.
+CI verifica Python 3.12 con SQLite, PostgreSQL 17 y 18. Los Excel se verificaron
+con el SDK Open XML de Microsoft, incluido el caso de exportación individual.
+
 Implementación de fases 1 a 5 (maestros, justificaciones, consultas e históricos) conforme a `ESPECIFICACION.md` y `AGENTS.md`.
 Python 3.12 y Django 5.2 LTS. SQLite local y PostgreSQL mediante DATABASE_URL.
 En servicio en https://asistencias-app-dret.vercel.app con Vercel y Neon.

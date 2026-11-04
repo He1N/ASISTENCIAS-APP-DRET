@@ -180,6 +180,18 @@ Administrador/Operador exportan por defecto. Consulta necesita habilitación exp
 del permiso de exportación y lectura del módulo. La lectura sola no autoriza la
 descarga; importación y anulación también se validan en servidor.
 
+## Excluir documentos y operaciones en consultas
+
+En «Más filtros», marcar uno o varios elementos de «Excluir tipos de documento»
+o «Excluir tipos de operación». Por ejemplo, fecha exacta 23/10/2026 y exclusión
+de «Papeleta de Permiso | 01» muestra los demás documentos de ese día. Los campos
+«Mostrar tipos de documento» permite marcar varios tipos (por ejemplo, Otros y
+Memorandum); se muestran registros de cualquiera de ellos. Sin marcar, se muestran
+todos. «Tipo de operación» permite incluir un tipo concreto; las exclusiones se
+aplican además de esas selecciones. Incluir y excluir
+el mismo tipo produce cero coincidencias. La selección se conserva al paginar,
+abrir registros y exportar Excel. «Limpiar filtros» elimina ambas selecciones.
+
 ## Límites del alojamiento
 
 En la preparación para Vercel se limita la carga XLSX a 4 MB. Si aparece

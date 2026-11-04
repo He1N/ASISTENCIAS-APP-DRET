@@ -1,0 +1,3 @@
+{% if field.name == 'tipo_documento' or field.name == 'excluir_documentos' or field.name == 'excluir_operaciones' %}
+<fieldset class="filtro-exclusion"><legend>{{ field.label }}</legend><p class="ayuda" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</p><div class="opciones-exclusion">{{ field }}</div>{{ field.errors }}</fieldset>
+{% else %}<div><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endif %}

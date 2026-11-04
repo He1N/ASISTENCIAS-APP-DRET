@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="{% static 'control/vendor/bootstrap-table-1.27.3.min.css' %}">
 {% block vendor_css %}{% endblock %}
 <link rel="stylesheet" href="{% static 'control/app.css' %}"></head>
-<body class="app-shell"><a class="saltar" href="#contenido">Saltar al contenido</a>
+<body class="app-shell {% block body_class %}{% endblock %}"><a class="saltar" href="#contenido">Saltar al contenido</a>
 <header><a class="identidad marca-dret" href="{% url 'inicio' %}" aria-label="DRET · Inicio"><img src="{% static 'control/brand.svg' %}" alt="" width="36" height="36"><span class="marca-texto"><strong>DRET</strong><span>Control de Asistencias</span></span></a>
 {% if user.is_authenticated %}<div class="sesion"><span>{{ user.get_username }}</span><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="secundario" type="submit">Cerrar sesión</button></form></div>{% endif %}</header>
 <div class="estructura {% if not user.is_authenticated %}acceso{% endif %}">

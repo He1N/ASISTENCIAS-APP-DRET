@@ -262,3 +262,17 @@ permitir exportar directamente los datos del Excel, añadir búsqueda y acciones
 por fila (editar y eliminar con iconos), y estructurar las tablas con un plugin
 local. Eliminar es lógico y auditado. La exportación preserva los valores
 históricos sin inventar correcciones para saldos inconsistentes.
+
+## 15. Ajustes autorizados de consultas y acceso (02/11/2026)
+
+Permitir excluir varios tipos de documento y de operación junto con los filtros
+existentes, tanto en pantalla como en la exportación. Caso solicitado: consultar
+23/10/2026 sin papeletas. Mantener selecciones al navegar y paginar.
+Para el acceso se autoriza fotografía de Tacna y formulario a la derecha;
+adaptar la disposición a móvil, conservar autenticación y mantener crédito de la foto.
+
+Ajuste del 04/11/2026: usar como fondo del acceso la fotografía suministrada por
+el responsable con desenfoque leve; sustituye la fotografía de terceros anterior.
+Los documentos admiten selección múltiple de inclusión (unión) y exclusión.
+Ordenar el detalle vacacional por fecha ascendente, usar inicio si falta fecha y
+dejar al final los movimientos sin ninguna fecha. Los empates mantienen orden estable.

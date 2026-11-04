@@ -45,6 +45,8 @@ class BusquedaSelect(forms.Select):
 def configurar_busquedas(form, parametros, modo='alta', grupo=None):
     for campo, model in MODELOS.items():
         field = form.fields[campo]
+        if isinstance(field, forms.ModelMultipleChoiceField):
+            continue
         seleccionado = form.data.get(campo) if form.is_bound else form.initial.get(campo)
         term = str(parametros.get(campo + '_buscar', ''))[:250].strip()
         options = list(buscar_opciones(model, term, incluir_inactivos=modo == 'consulta', grupo=grupo))

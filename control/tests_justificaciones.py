@@ -216,6 +216,60 @@ class JustificacionesTests(TestCase):
             self.assertTrue(response.context['filtros'].errors)
             self.assertEqual(response.context['pagina'].paginator.count,0)
 
+    def test_exclusiones_multiples_fecha_exportacion_y_navegacion(self):
+        from io import BytesIO
+        from openpyxl import load_workbook
+        self.login('Administrador')
+        oficio=TipoDocumento.objects.get(nombre='Oficio')
+        informe=TipoDocumento.objects.get(nombre='Informe')
+        self.registro(fecha_movimiento=date(2026,10,23),cud='PAPELETA-EXCLUIDA')
+        self.registro(tipo_documento=informe,fecha_movimiento=date(2026,10,23),cud='INFORME-EXCLUIDO')
+        self.registro(tipo_documento=oficio,tipo_operacion=self.con_final,fecha_movimiento=date(2026,10,23),cud='OPERACION-EXCLUIDA')
+        self.registro(tipo_documento=oficio,fecha_movimiento=date(2026,10,24),cud='OTRO-DIA')
+        kept=self.registro(tipo_documento=oficio,fecha_movimiento=date(2026,10,23),cud='CONSERVADO')
+        params={'fecha':'2026-10-23','excluir_documentos':[self.documento.pk,informe.pk],
+                'excluir_operaciones':[self.con_final.pk]}
+        response=self.client.get(reverse('consultas'),params)
+        self.assertEqual([f['obj'].pk for f in response.context['filas']],[kept.pk])
+        self.assertContains(response,'name="excluir_documentos"')
+        from urllib.parse import parse_qs,urlsplit
+        for url in [response.context['url_exportar'],response.context['filas'][0]['url']]:
+            self.assertEqual(parse_qs(urlsplit(url).query)['excluir_documentos'],[str(self.documento.pk),str(informe.pk)])
+        exported=self.client.get(response.context['url_exportar'])
+        data=b''.join(exported.streaming_content)
+        workbook=load_workbook(BytesIO(data))
+        cells=[str(v) for row in workbook.active.values for v in row]
+        self.assertIn('CONSERVADO',cells)
+        for excluded in ['PAPELETA-EXCLUIDA','INFORME-EXCLUIDO','OPERACION-EXCLUIDA','OTRO-DIA']:
+            self.assertNotIn(excluded,cells)
+
+    def test_exclusiones_invalidas_y_conflicto_con_inclusion(self):
+        self.login('Consulta'); self.registro()
+        for params in [{'excluir_documentos':['999999']},{'excluir_operaciones':['invalido']},
+                       {'tipo_documento':self.documento.pk,'excluir_documentos':[self.documento.pk]}]:
+            response=self.client.get(reverse('consultas'),params)
+            self.assertEqual(response.context['pagina'].paginator.count,0)
+
+    def test_documentos_multiples_union_y_exportacion(self):
+        from io import BytesIO
+        from openpyxl import load_workbook
+        self.login('Administrador')
+        otros=TipoDocumento.objects.get(nombre='Otros')
+        memo=TipoDocumento.objects.get(nombre='Memorandum')
+        a=self.registro(tipo_documento=otros,cud='MULTIPLE-OTROS')
+        b=self.registro(tipo_documento=memo,cud='MULTIPLE-MEMO')
+        self.registro(cud='NO-PAPELETA')
+        params={'tipo_documento':[otros.pk,memo.pk]}
+        response=self.client.get(reverse('consultas'),params)
+        self.assertEqual({f['obj'].pk for f in response.context['filas']},{a.pk,b.pk})
+        exported=self.client.get(response.context['url_exportar'])
+        book=load_workbook(BytesIO(b''.join(exported.streaming_content)))
+        cells=[str(v) for row in book.active.values for v in row]
+        self.assertIn('MULTIPLE-OTROS',cells); self.assertIn('MULTIPLE-MEMO',cells)
+        self.assertNotIn('NO-PAPELETA',cells)
+        response=self.client.get(reverse('consultas'),{'tipo_documento':[otros.pk,memo.pk],'excluir_documentos':[memo.pk]})
+        self.assertEqual([f['obj'].pk for f in response.context['filas']],[a.pk])
+
     def test_paginacion_511_sinteticos_orden_estable_y_null_al_final(self):
         data=dict(trabajador=self.trabajador, periodo=self.periodo, tipo_documento=self.documento,
             tipo_operacion=self.operacion, created_by=self.users['Operador'], updated_by=self.users['Operador'])

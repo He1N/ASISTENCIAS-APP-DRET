@@ -1,5 +1,6 @@
 """Control de derechos confirmados e historial, separado de los periodos de asistencia."""
 from decimal import Decimal
+from datetime import date
 
 
 def decimal(value):
@@ -13,7 +14,8 @@ def detalle(cuenta):
             inicio=m.inicio, fin=m.fin, dias=m.dias, permiso=m.permiso_ley,
             observaciones=m.observaciones, estado=m.estado, pendiente=m.pendiente_revision,
             origen=m.origen, justificacion=None))
-    return sorted(rows, key=lambda r: (str(r['inicio'] or ''), r['pk'] or 0))
+    return sorted(rows, key=lambda r: (r['fecha'] or r['inicio'] or date.max,
+                                      r['inicio'] or date.max, r['pk'] or 0))
 
 
 def resumen(cuenta):

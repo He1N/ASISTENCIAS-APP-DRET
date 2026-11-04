@@ -30,6 +30,14 @@ class ControlVacacionesTests(TestCase):
         self.assertEqual(r['por_anio']['2024'],0)
         self.assertEqual(r['por_anio']['2025'],Decimal('29.5'))
 
+    def test_detalle_cronologico_por_fecha_con_sin_fecha_al_final(self):
+        newer=MovimientoVacacion.objects.create(cuenta=self.account,codigo='05',dias=1,
+            fecha=date(2026,10,1),inicio=date(2026,1,1))
+        older=MovimientoVacacion.objects.create(cuenta=self.account,codigo='05',dias=1,
+            fecha=date(2025,10,1),inicio=date(2026,11,1))
+        unknown=MovimientoVacacion.objects.create(cuenta=self.account,codigo='05',dias=0)
+        self.assertEqual([r['pk'] for r in resumen(self.account)['filas']],[older.pk,newer.pk,unknown.pk])
+
     def test_pendientes_anuales_y_detalle_de_descuentos(self):
         self.client.force_login(self.user)
         MovimientoVacacion.objects.create(cuenta=self.account,codigo='05',dias=Decimal('10.5'))

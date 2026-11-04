@@ -4,7 +4,7 @@
 <form method="get" class="filtros consultas-filtros" aria-label="Filtros de consultas">
   {% for field in filtros_principales %}<div><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
   <details class="filtros-avanzados" {% if abrir_avanzados %}open{% endif %}><summary>Más filtros</summary>
-  <div class="rejilla-filtros">{% for field in filtros_avanzados %}<div><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}</div></details>
+  <div class="rejilla-filtros">{% for field in filtros_avanzados %}{% include 'control/filtro_campo.html' %}{% endfor %}</div></details>
   <div class="acciones"><button type="submit">Buscar</button><a href="{% url 'consultas' %}">Limpiar filtros</a></div>
 </form>
 <p class="conteo">{{ pagina.paginator.count }} coincidencia{{ pagina.paginator.count|pluralize:'s' }}</p>

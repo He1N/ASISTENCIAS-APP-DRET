@@ -54,8 +54,16 @@ class FiltroJustificaciones(forms.Form):
     desde = forms.DateField(label='Movimiento desde', required=False)
     hasta = forms.DateField(label='Movimiento hasta', required=False)
     periodo = forms.ModelChoiceField(label='Periodo', queryset=PeriodoAsistencia.objects.all(), required=False)
-    tipo_documento = forms.ModelChoiceField(label='Tipo de documento', queryset=TipoDocumento.objects.all(), required=False)
+    tipo_documento = forms.ModelMultipleChoiceField(label='Mostrar tipos de documento',
+        queryset=TipoDocumento.objects.all(), required=False, widget=forms.CheckboxSelectMultiple,
+        help_text='Puede marcar varios. Sin seleccionar se muestran todos los documentos.')
     tipo_operacion = forms.ModelChoiceField(label='Tipo de operación', queryset=TipoOperacion.objects.all(), required=False)
+    excluir_documentos = forms.ModelMultipleChoiceField(label='Excluir tipos de documento',
+        queryset=TipoDocumento.objects.all(), required=False, widget=forms.CheckboxSelectMultiple,
+        help_text='Marque los documentos que no deben aparecer. Puede elegir varios.')
+    excluir_operaciones = forms.ModelMultipleChoiceField(label='Excluir tipos de operación',
+        queryset=TipoOperacion.objects.all(), required=False, widget=forms.CheckboxSelectMultiple,
+        help_text='Marque las operaciones que no deben aparecer. Puede elegir varias.')
     cud = forms.CharField(label='CUD (fragmento)', required=False, max_length=250)
     activo = forms.ChoiceField(label='Estado del trabajador', required=False,
         choices=[('', 'Todos'), ('1', 'Activos'), ('0', 'Inactivos')])
@@ -72,6 +80,7 @@ class FiltroJustificaciones(forms.Form):
                 field.input_formats = ['%Y-%m-%d', '%d/%m/%Y']
         if grupo:
             self.fields['tipo_operacion'].queryset = self.fields['tipo_operacion'].queryset.filter(grupo_especial=grupo)
+            self.fields['excluir_operaciones'].queryset = self.fields['excluir_operaciones'].queryset.filter(grupo_especial=grupo)
         configurar_busquedas(self, self.data, modo='consulta', grupo=grupo)
 
     def clean(self):

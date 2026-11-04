@@ -81,9 +81,15 @@ def aplicar_filtros(filtros):
             term = data['q']
             qs = qs.filter(Q(trabajador__nombre_busqueda__contains=normalizar(term)) |
                 Q(trabajador__dni__contains=term) | Q(cud__icontains=term) | Q(observaciones__icontains=term))
-        for field in ('trabajador', 'periodo', 'tipo_documento', 'tipo_operacion'):
+        for field in ('trabajador', 'periodo', 'tipo_operacion'):
             if data[field]:
                 qs = qs.filter(**{field: data[field]})
+        if data['tipo_documento']:
+            qs = qs.filter(tipo_documento__in=data['tipo_documento'])
+        for field, lookup in [('excluir_documentos', 'tipo_documento__in'),
+                              ('excluir_operaciones', 'tipo_operacion__in')]:
+            if data[field]:
+                qs = qs.exclude(**{lookup: data[field]})
         for form_field, lookup in [('dni', 'trabajador__dni__contains'), ('cud', 'cud__icontains'),
                 ('fecha', 'fecha_movimiento'), ('desde', 'fecha_movimiento__gte'), ('hasta', 'fecha_movimiento__lte')]:
             if data[form_field]:

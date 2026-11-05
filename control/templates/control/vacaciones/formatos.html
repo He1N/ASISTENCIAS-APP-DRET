@@ -1,0 +1,10 @@
+{% extends 'control/vacaciones/base.html' %}
+{% block content %}<section class="vacaciones-ui">
+<a class="vac-back" href="{% url 'vacacion_ficha' cuenta.pk %}">← Volver al detalle</a>
+<h1>Generar formato</h1><p>{{ cuenta.nombre }} · DNI {{ cuenta.dni }}</p>
+<form method="get" class="formulario"><input type="hidden" name="generar" value="1">
+{{ form.non_field_errors }}
+{% for field in form %}<div class="campo"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
+<p class="ayuda">Años con fechas registradas: {% for anio in anios %}{{ anio }}{% if not forloop.last %}, {% endif %}{% empty %}ninguno{% endfor %}. Puede escribir otro año.</p>
+<p>Solo vacaciones vigentes. Los intervalos se limitan al año elegido e incluyen los sábados y domingos comprendidos.</p>
+<button type="submit">Descargar Word</button></form></section>{% endblock %}

@@ -29,6 +29,7 @@ urlpatterns += [
     path('control-vacaciones/exportar/', vacaciones_control.exportar, name='vacacion_exportar'),
     path('control-vacaciones/<int:pk>/', vacaciones_control.ficha, name='vacacion_ficha'),
     path('control-vacaciones/<int:pk>/exportar/', vacaciones_control.exportar, name='vacacion_exportar_individual'),
+    path('control-vacaciones/<int:pk>/formatos/', vacaciones_control.formatos, name='vacacion_formatos'),
     path('control-vacaciones/<int:pk>/editar/', vacaciones_control.editar, name='vacacion_editar'),
     path('control-vacaciones/<int:pk>/eliminar/', vacaciones_control.eliminar, name='vacacion_eliminar'),
     path('control-vacaciones/<int:pk>/movimiento/<int:movimiento>/eliminar/', vacaciones_control.eliminar, name='vacacion_movimiento_eliminar'),

@@ -42,6 +42,41 @@ def ficha(request,pk):
 
 @never_cache
 @login_required
+@permission_required(['control.view_cuentavacacion','control.exportar_resultados'],raise_exception=True)
+@require_safe
+def formatos(request,pk):
+    from django import forms
+    from django.utils import timezone
+    from .vacaciones_word import generar_docx
+    from io import BytesIO
+    from zipfile import ZipFile,ZIP_DEFLATED
+    c=get_object_or_404(CuentaVacacion,pk=pk,eliminada=False)
+    class Opciones(forms.Form):
+        anio=forms.IntegerField(label='Año de las fechas Del/Al',min_value=1900,max_value=9999,initial=timezone.localdate().year)
+        formato=forms.ChoiceField(label='Formato',choices=[('record','Récord'),('informe','Informe'),('ambos','Ambos (archivo ZIP)')])
+    form=Opciones(request.GET if request.GET.get('generar') else None)
+    years=sorted({d.year for m in c.movimientos.filter(estado='VIGENTE') for d in (m.inicio,m.fin) if d},reverse=True)
+    if form.is_bound and form.is_valid():
+        year=form.cleaned_data['anio']; choice=form.cleaned_data['formato']
+        name=re.sub(r'[^\w .-]','',c.nombre).strip() or c.dni
+        try:
+            if choice=='ambos':
+                out=BytesIO()
+                with ZipFile(out,'w',ZIP_DEFLATED) as z:
+                    for kind in ['record','informe']: z.writestr(f'{kind}_{name}_{year}.docx',generar_docx(c,year,kind))
+                data=out.getvalue(); filename=f'Formatos_{name}_{year}.zip'; mime='application/zip'
+            else:
+                data=generar_docx(c,year,choice); filename=f'{choice}_{name}_{year}.docx'
+                mime='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            response=HttpResponse(data,content_type=mime)
+            response['Content-Disposition']=content_disposition_header(True,filename)
+            return response
+        except ValueError as exc: form.add_error(None,str(exc))
+    return render(request,'control/vacaciones/formatos.html',dict(titulo='Generar formato',tipo='control_vacaciones',cuenta=c,form=form,anios=years))
+
+
+@never_cache
+@login_required
 @permission_required('control.change_cuentavacacion',raise_exception=True)
 @require_http_methods(['GET','POST'])
 def editar(request,pk=None,movimiento=None,nuevo=False):

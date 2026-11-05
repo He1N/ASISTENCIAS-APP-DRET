@@ -276,3 +276,12 @@ el responsable con desenfoque leve; sustituye la fotografía de terceros anterio
 Los documentos admiten selección múltiple de inclusión (unión) y exclusión.
 Ordenar el detalle vacacional por fecha ascendente, usar inicio si falta fecha y
 dejar al final los movimientos sin ninguna fecha. Los empates mantienen orden estable.
+
+## 16. Formatos Word individuales de vacaciones
+
+Generar Récord, Informe o ambos desde cada ficha, siguiendo solo los cuadros de
+los Word del responsable. Seleccionar año por Del/Al, exclusivamente vigentes,
+dividiendo los intervalos que cruzan diciembre y enero. El informe muestra números
+de día por mes y lunes a domingo; cuenta los fines de semana dentro del intervalo.
+Probar y entregar ejemplos locales antes de autorizar la publicación. No modificar
+datos al generar. Véase docs/FORMATOS_VACACIONES.md.

@@ -30,6 +30,52 @@ class ControlVacacionesTests(TestCase):
         self.assertEqual(r['por_anio']['2024'],0)
         self.assertEqual(r['por_anio']['2025'],Decimal('29.5'))
 
+    def test_formatos_word_vigentes_anio_y_fines_de_semana(self):
+        from .vacaciones_word import generar_docx,movimientos_del_anio,w
+        m=MovimientoVacacion.objects.create(cuenta=self.account,codigo='05',dias=6,
+            inicio=date(2025,12,29),fin=date(2026,1,3),periodo='2024',observaciones='VIGENTE SINTETICO')
+        MovimientoVacacion.objects.create(cuenta=self.account,codigo='05',dias=1,estado='ANULADO',
+            inicio=date(2026,1,4),fin=date(2026,1,4),observaciones='ANULADO NO EXPORTAR')
+        rows,_=movimientos_del_anio(self.account,2026)
+        self.assertEqual(rows[0]['inicio'],date(2026,1,1)); self.assertEqual(rows[0]['dias'],3)
+        self.assertEqual(movimientos_del_anio(self.account,2025)[0][0]['dias'],3)
+        data=generar_docx(self.account,2026,'informe')
+        root=ET.fromstring(ZipFile(BytesIO(data)).read('word/document.xml'))
+        table=root.find('.//'+w('tbl')); row=table.findall(w('tr'))[1]
+        values=[''.join(c.itertext()) for c in row.findall(w('tc'))]
+        self.assertEqual(values,['ENERO','','','','1','2','3',''])
+        record=ZipFile(BytesIO(generar_docx(self.account,2026,'record'))).read('word/document.xml').decode()
+        self.assertNotIn('ANULADO NO EXPORTAR',record)
+        self.assertIn('01/01/2026',record); self.assertNotIn('29/12/2025',record)
+
+    def test_formatos_ambos_permisos_y_ajustes_no_repartibles(self):
+        self.client.force_login(self.user)
+        url=reverse('vacacion_formatos',args=[self.account.pk])
+        self.assertContains(self.client.get(url),'Año de las fechas Del/Al')
+        response=self.client.get(url,{'generar':'1','anio':'2026','formato':'ambos'})
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(len(ZipFile(BytesIO(response.content)).namelist()),2)
+        self.assertContains(self.client.get(url,{'generar':'1','anio':'xx','formato':'record'}),'Introduzca')
+        MovimientoVacacion.objects.create(cuenta=self.account,codigo='05',dias=2,
+            inicio=date(2025,12,29),fin=date(2026,1,3))
+        response=self.client.get(url,{'generar':'1','anio':'2026','formato':'informe'})
+        self.assertContains(response,'cruza de año')
+        user=get_user_model().objects.create_user('sin_exportacion',password='sintetica')
+        self.client.force_login(user); self.assertEqual(self.client.get(url).status_code,403)
+
+    def test_informe_incluye_sabados_domingos_y_no_duplica_fecha(self):
+        from .vacaciones_word import generar_docx,w
+        MovimientoVacacion.objects.create(cuenta=self.account,codigo='05',dias=11,
+            inicio=date(2026,1,9),fin=date(2026,1,19))
+        MovimientoVacacion.objects.create(cuenta=self.account,codigo='32',dias=Decimal('.5'),
+            inicio=date(2026,1,9),fin=date(2026,1,9))
+        root=ET.fromstring(ZipFile(BytesIO(generar_docx(self.account,2026,'informe'))).read('word/document.xml'))
+        rows=root.find('.//'+w('tbl')).findall(w('tr'))[1:]
+        values=[[''.join(c.itertext()) for c in r.findall(w('tc'))] for r in rows]
+        self.assertEqual(values[0][-2:],['10','11'])
+        self.assertEqual(values[1][-2:],['17','18'])
+        self.assertEqual(sum(row.count('9') for row in values),1)
+
     def test_detalle_cronologico_por_fecha_con_sin_fecha_al_final(self):
         newer=MovimientoVacacion.objects.create(cuenta=self.account,codigo='05',dias=1,
             fecha=date(2026,10,1),inicio=date(2026,1,1))

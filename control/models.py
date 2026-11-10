@@ -1,7 +1,7 @@
 import unicodedata
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 
 
@@ -149,6 +149,16 @@ class Justificacion(Fechado):
             errors['fecha_final'] = 'La fecha final no puede ser anterior al movimiento.'
         if errors:
             raise ValidationError(errors)
+    def save(self, *args, **kwargs):
+        # La justificación y su descuento se confirman o revierten juntos.
+        with transaction.atomic():
+            if self.pk:
+                type(self).objects.select_for_update().filter(pk=self.pk).exists()
+            super().save(*args, **kwargs)
+            from .vacaciones_sync import sincronizar
+            sincronizar(self)
+            self._state.fields_cache.pop('enlace_vacacion',None)
+
     @property
     def es_registro_tardio(self):
         if self.fuente == 'EXCEL':
@@ -230,3 +240,15 @@ class MovimientoVacacion(Fechado):
 
     class Meta:
         ordering = ['inicio', 'pk']
+
+
+class EnlaceVacacion(Fechado):
+    justificacion = models.OneToOneField(Justificacion, on_delete=models.PROTECT, related_name='enlace_vacacion')
+    cuenta = models.ForeignKey(CuentaVacacion, null=True, blank=True, on_delete=models.PROTECT, related_name='enlaces')
+    movimiento = models.OneToOneField(MovimientoVacacion, null=True, blank=True, on_delete=models.PROTECT, related_name='enlace_asistencia')
+    estado = models.CharField(max_length=16, choices=[('SINCRONIZADO','Sincronizado'),('PENDIENTE','Pendiente de revisión'),
+        ('EXCEPCION','Ajuste histórico conservado'),('INACTIVO','Sin descuento vigente')])
+    observaciones = models.TextField(blank=True)
+
+    class Meta:
+        default_permissions = ('view',)

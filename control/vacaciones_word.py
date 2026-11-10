@@ -30,6 +30,9 @@ def anios_disponibles(cuenta):
 def observaciones_control(cuenta):
     current=resumen(cuenta)
     notes=list(current['incidencias'])
+    if hasattr(cuenta,'enlaces'):
+        notes.extend(f'Consultas, registro {e.justificacion_id}: {e.observaciones}'
+            for e in cuenta.enlaces.exclude(estado__in=['SINCRONIZADO','INACTIVO']))
     if not any(v is not None for v in cuenta.asignaciones.values()):
         notes.append('Sin asignaciones anuales registradas. Verificar los derechos disponibles; no se concedieron días automáticamente.')
     intervals=[]

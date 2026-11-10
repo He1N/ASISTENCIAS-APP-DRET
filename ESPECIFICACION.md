@@ -298,3 +298,19 @@ intermedios de los intervalos. Colocar al final observaciones sobre saldos,
 intervalos incompletos, discrepancias, códigos pendientes y superposiciones.
 Las incongruencias se documentan sin modificar los datos ni inventar repartos.
 El responsable autoriza aplicar estos cambios tanto en Git como en producción.
+
+## 18. Enlace de Consultas con el control vacacional autorizado el 09/11/2026
+
+El responsable solicita verificar las vacaciones del periodo administrativo
+Noviembre (inicio 12/10/2026) y descontar automáticamente nuevas vacaciones de
+Consultas/Asistencias, tanto en registro web como en importación confirmada.
+Esta instrucción sustituye la separación de módulos de la sección 14.
+Vacaciones 05 descuenta días calendario inclusivos con fechas completas;
+Vacaciones 1/2 Jornada 32 descuenta 0,5 para una única fecha. Intervalos ambiguos,
+identidades inciertas y códigos sin regla se conservan pendientes, visibles.
+Edición y anulación actualizan o retiran el mismo consumo, con auditoría y sin
+duplicarlo. Nunca se crean asignaciones automáticas. Los saldos admiten negativos.
+Conciliar únicamente el histórico de Noviembre solicitado, enlazando consumos
+inequívocos existentes. El responsable elige expresamente conservar los ajustes,
+suspensiones y anulaciones del control y señalar las diferencias para revisión.
+No recalcular los históricos de Octubre ni reactivar ajustes conservados.

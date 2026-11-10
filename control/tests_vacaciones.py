@@ -270,7 +270,7 @@ class ControlVacacionesTests(TestCase):
         self.assertEqual(m.estado,'CANCELADO')
         self.assertEqual(resumen(self.account)['usado'],0)
 
-    def test_justificaciones_y_excel_son_independientes(self):
+    def test_justificaciones_actualizan_solo_su_consumo_sin_alterar_excel(self):
         MovimientoVacacion.objects.create(cuenta=self.account,codigo='05',dias=3)
         op=TipoOperacion.objects.create(nombre='VACACION FICTICIA',codigo_externo='05',grupo_especial='VACACIONES',requiere_fecha_final=True)
         obj=Justificacion(trabajador=self.worker,tipo_operacion=op,
@@ -279,12 +279,12 @@ class ControlVacacionesTests(TestCase):
             fecha_movimiento=date(2026,1,1),fecha_final=date(2026,2,15))
         obj.full_clean()
         obj.save()
-        self.assertEqual(resumen(self.account)['usado'],3)
+        self.assertEqual(resumen(self.account)['usado'],49)
         obj.fecha_final=date(2026,3,15); obj.save()
-        self.assertEqual(resumen(self.account)['usado'],3)
+        self.assertEqual(resumen(self.account)['usado'],77)
         obj.anulada=True; obj.save()
         self.assertEqual(resumen(self.account)['usado'],3)
-        self.assertEqual(len(resumen(self.account)['filas']),1)
+        self.assertEqual(len(resumen(self.account)['filas']),2)
 
     def test_edicion_obsoleta_rechazada(self):
         self.client.force_login(self.user)

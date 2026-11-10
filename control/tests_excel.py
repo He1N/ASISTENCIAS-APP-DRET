@@ -77,6 +77,27 @@ class ExcelTests(TestCase):
         self.assertEqual(obj.hora_salida,time(10,0));self.assertEqual(obj.hora_retorno,time(11,30))
         self.assertEqual(obj.fila_origen,5);self.assertEqual(obj.item_origen,'1')
 
+    def test_importar_vacaciones_y_medias_jornadas_descuenta_y_anular_lote_devuelve(self):
+        from .models import CuentaVacacion,MovimientoVacacion,EnlaceVacacion
+        from .vacaciones import resumen
+        from decimal import Decimal
+        op=TipoOperacion.objects.get(nombre='Vacaciones');op.codigo_externo='05';op.requiere_fecha_final=True;op.save()
+        half=TipoOperacion.objects.get(nombre='Vacaciones 1/2 Jornada');half.codigo_externo='32';half.requiere_fecha_final=False;half.save()
+        c=CuentaVacacion.objects.create(nombre='PERSONA FICTICIA',dni='00123456',asignaciones={'2026':'1'})
+        rows=[fila(fecha=date(2026,11,1),final=date(2026,11,3),operacion='Vacaciones | 05'),
+            fila(fecha=date(2026,11,4),final=date(2026,11,4),operacion='Vacaciones 1/2 Jornada | 32',item=2)]
+        lote=self.borrador(rows,periodo=self.nov)
+        _,plan=self.revision(lote)
+        self.assertGreater(plan['totales']['listas'],0,str(plan))
+        self.confirmar(lote)
+        self.assertEqual(resumen(c)['usado'],Decimal('3.5'))
+        self.assertEqual(resumen(c)['pendiente'],Decimal('-2.5'))
+        confirmar(lote.pk,self.users['Operador'],'confirmacion_repetida')
+        self.assertEqual(MovimientoVacacion.objects.count(),2)
+        self.assertEqual(EnlaceVacacion.objects.count(),2)
+        anular_lote(lote.pk,self.users['Administrador'],'Anulación de prueba')
+        self.assertEqual(resumen(c)['usado'],0)
+
     def test_octubre_descarta_todos_cud_noviembre_conserva(self):
         lote=self.borrador([fila(cud='SOSPECHOSO')]);self.assertNotIn('SOSPECHOSO',str(lote.datos_temporales))
         self.confirmar(lote);obj=Justificacion.objects.get();self.assertIsNone(obj.cud)

@@ -1,5 +1,9 @@
 # Control vacacional
 
+**Actualización del 09/11/2026:** Consultas y el control están enlazados para
+nuevas vacaciones. La regla de separación descrita en el historial de este
+documento queda sustituida por [Enlace de vacaciones](ENLACE_VACACIONES.md).
+
 Ampliación solicitada el 01/11/2026: asignaciones explícitas por trabajador/año,
 consumo del año más antiguo primero, edición con motivo, anulación/cancelación
 sin eliminación y exportación general o individual de exactamente dos hojas:

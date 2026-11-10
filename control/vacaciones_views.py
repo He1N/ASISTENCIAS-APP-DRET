@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods, require_safe
-from .models import CuentaVacacion, MovimientoVacacion
+from .models import CuentaVacacion, MovimientoVacacion, EnlaceVacacion
 from .audit import registrar, snapshot
 from .vacaciones import resumen
 from .vacaciones_forms import CuentaForm, MovimientoForm
@@ -27,7 +27,7 @@ def lista(request):
     page=Paginator(qs,25).get_page(request.GET.get('page'))
     rows=[resumen(c) for c in page]
     return render(request,'control/vacaciones/lista.html',dict(titulo='Control de vacaciones',tipo='control_vacaciones',
-        pagina=page,filas=rows,q=q))
+        pagina=page,filas=rows,q=q,enlaces_pendientes=EnlaceVacacion.objects.filter(estado__in=['PENDIENTE','EXCEPCION']).select_related('justificacion__trabajador','cuenta')))
 
 
 @never_cache
@@ -97,6 +97,10 @@ def editar(request,pk=None,movimiento=None,nuevo=False):
         locked=list(CuentaVacacion.objects.select_for_update().filter(pk__in=ids).order_by('pk'))
         c=get_object_or_404(CuentaVacacion,pk=pk,eliminada=False) if pk else CuentaVacacion()
         obj=(MovimientoVacacion(cuenta=c) if nuevo else get_object_or_404(MovimientoVacacion,pk=movimiento,cuenta=c)) if (movimiento or nuevo) else c
+        if movimiento:
+            enlace=EnlaceVacacion.objects.filter(movimiento=obj).first()
+            if enlace:
+                return render(request,'control/vacaciones/movimiento_enlazado.html',dict(enlace=enlace,cuenta=c,tipo='control_vacaciones'))
         before=snapshot(obj) if obj.pk else None
         Form=MovimientoForm if isinstance(obj,MovimientoVacacion) else CuentaForm
         form=Form(request.POST or None,instance=obj)
@@ -153,6 +157,10 @@ def eliminar(request,pk,movimiento=None):
     with transaction.atomic():
         cuenta=get_object_or_404(CuentaVacacion.objects.select_for_update(),pk=pk,eliminada=False)
         obj=get_object_or_404(MovimientoVacacion,pk=movimiento,cuenta=cuenta) if movimiento else cuenta
+        if movimiento:
+            enlace=EnlaceVacacion.objects.filter(movimiento=obj).first()
+            if enlace:
+                return render(request,'control/vacaciones/movimiento_enlazado.html',dict(enlace=enlace,cuenta=cuenta,tipo='control_vacaciones'))
         error=None
         if request.method=='POST':
             if request.POST.get('version')!=obj.updated_at.isoformat():

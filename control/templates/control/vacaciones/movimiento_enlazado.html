@@ -1,0 +1,5 @@
+{% extends 'control/vacaciones/base.html' %}
+{% block content %}<h1>Movimiento vinculado a Consultas</h1>
+<p>Para actualizar o anular este consumo, edite la justificación de origen. Así se mantienen iguales el registro y su descuento.</p>
+{% if perms.control.view_justificacion %}<p><a class="boton" href="{% url 'justificacion_detalle' enlace.justificacion_id %}">Ver justificación {{ enlace.justificacion_id }}</a></p>{% endif %}
+<p><a href="{% url 'vacacion_ficha' cuenta.pk %}">Volver al control de vacaciones</a></p>{% endblock %}

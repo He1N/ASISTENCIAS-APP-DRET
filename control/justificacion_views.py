@@ -149,6 +149,7 @@ def justificacion_detalle(request, pk):
     ctx = contexto(request)
     ctx.update(objeto=obj, datos=datos, avisos_horas=avisos_horas(obj), url_editar=url_consulta(request, 'justificacion_editar', pk),
                url_anular=url_consulta(request, 'justificacion_anular', pk))
+    ctx['enlace_vacacion']=getattr(obj,'enlace_vacacion',None)
     if request.user.has_perm('control.view_historialcambio'):
         from .models import HistorialCambio
         ctx['auditoria'] = HistorialCambio.objects.filter(entidad='justificacion', objeto_id=pk).select_related('autor')
@@ -199,6 +200,9 @@ def justificacion_formulario(request, pk=None):
                     obj.created_by = request.user
                 obj.updated_by = request.user
                 obj.save()
+                enlace=getattr(obj,'enlace_vacacion',None)
+                if enlace and enlace.estado in {'PENDIENTE','EXCEPCION'}:
+                    messages.warning(request,'Control de vacaciones: '+enlace.observaciones)
                 motivos = {k: form.cleaned_data[k] for k in ('motivo_excepcion', 'motivo_edicion') if form.cleaned_data.get(k)}
                 registrar(obj, request.user, 'editar' if pk is not None else 'crear', antes, contexto=motivos)
                 if request.POST.get('accion') == 'otro':

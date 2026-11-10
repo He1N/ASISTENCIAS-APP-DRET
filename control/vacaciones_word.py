@@ -16,6 +16,49 @@ def w(x): return '{'+NS+'}'+x
 MONTHS=['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE']
 def num(x): return format(Decimal(str(x)).normalize(),'f').replace('.',',')
 
+def anios_disponibles(cuenta):
+    years={int(y) for y,v in cuenta.asignaciones.items() if str(y).isdigit() and v is not None and 1900<=int(y)<=9999}
+    for m in cuenta.movimientos.all():
+        if m.estado!='VIGENTE': continue
+        years.update(d.year for d in (m.fecha,m.inicio,m.fin) if d)
+        if str(m.periodo).isdigit() and 1900<=int(m.periodo)<=9999: years.add(int(m.periodo))
+        if m.inicio and m.fin and m.inicio<=m.fin:
+            years.update(range(m.inicio.year,m.fin.year+1))
+    return sorted(years)
+
+
+def observaciones_control(cuenta):
+    current=resumen(cuenta)
+    notes=list(current['incidencias'])
+    if not any(v is not None for v in cuenta.asignaciones.values()):
+        notes.append('Sin asignaciones anuales registradas. Verificar los derechos disponibles; no se concedieron días automáticamente.')
+    intervals=[]
+    for m in cuenta.movimientos.all():
+        if m.estado!='VIGENTE': continue
+        label=f'Registro {m.pk} (periodo {m.periodo or "sin indicar"})'
+        if m.codigo not in {'05','32','09'}:
+            notes.append(f'{label}: código {m.codigo} sin regla automática confirmada; se conservan los días declarados.')
+        if m.dias is None:
+            notes.append(f'{label}: sin cantidad de días; el saldo acumulado puede estar incompleto.')
+        if m.codigo=='09' and m.dias:
+            notes.append(f'{label}: Permiso Ley con {num(m.dias)} días descontados en la ficha; no se representa como vacaciones en el calendario. Revisar la clasificación.')
+        if m.dias and (not m.inicio or not m.fin or m.fin<m.inicio):
+            notes.append(f'{label}: {num(m.dias)} días descontados sin Del/Al válidos; incluidos en el consumo acumulado, sin distribuir en el calendario. {m.observaciones}')
+        if m.codigo!='09' and m.dias and m.inicio and m.fin and m.inicio<=m.fin:
+            for other in intervals:
+                if m.inicio<=other.fin and other.inicio<=m.fin:
+                    notes.append(f'Posible superposición entre registros {other.pk} y {m.pk}: del {max(other.inicio,m.inicio):%d/%m/%Y} al {min(other.fin,m.fin):%d/%m/%Y}. El consumo conserva ambos registros; el calendario muestra cada fecha una vez. Revisar si corresponde a medias jornadas o duplicidad.')
+            intervals.append(m)
+    return list(dict.fromkeys(notes))
+
+
+def saldo_documento(body,cuenta):
+    current=resumen(cuenta)
+    paragraph(body,f'Asignaciones registradas: {num(current["programado"])} días. Consumo vigente acumulado: {num(current["usado"])} días. Saldo acumulado actual: {num(current["pendiente"])} días.',size=20)
+    if current['pendiente']<0:
+        paragraph(body,f'SALDO NEGATIVO: consumo excedido en {num(-current["pendiente"])} días respecto de las asignaciones registradas. No se añaden derechos ni se compensa el exceso automáticamente.',True,20)
+    paragraph(body,'El saldo corresponde a toda la ficha al generar el documento, no al cierre del año. Sujeto a las asignaciones y movimientos registrados.',size=18)
+
 def movimientos_del_anio(cuenta,anio):
     rows=[]; warnings=[]
     for m in cuenta.movimientos.all():
@@ -35,7 +78,8 @@ def movimientos_del_anio(cuenta,anio):
         complete=(m.fin-m.inicio).days+1
         if start!=m.inicio or end!=m.fin:
             if quantity!=complete:
-                raise ValueError(f'El registro {m.pk} cruza de año y declara {num(quantity)} días para un intervalo de {complete}. Corrija el registro antes de repartirlo por año.')
+                warnings.append(f'Registro {m.pk}: cruza de año ({m.inicio:%d/%m/%Y} al {m.fin:%d/%m/%Y}) y declara {num(quantity)} días para un intervalo de {complete}. Incluido en el consumo acumulado; no se repartió en los cuadros anuales para evitar atribuir días incorrectos. {m.observaciones}')
+                continue
             quantity=Decimal((end-start).days+1)
         if m.dias!=complete and not (m.codigo=='32' and complete==1 and m.dias==Decimal('.5')):
             warnings.append(f'Registro {m.pk}, {start:%d/%m/%Y}: {num(quantity)} días declarados; intervalo de {(end-start).days+1} días. Se conserva la cantidad original, sin inventar fechas.')
@@ -101,7 +145,7 @@ def paragraph(body,text,bold=False,size=22):
     if bold: E.SubElement(pr,w('b'))
     E.SubElement(r,w('t')).text=text
 
-def generar_docx(cuenta,anio,formato):
+def generar_docx(cuenta,anio,formato,con_observaciones=True):
     if formato not in {'record','informe'} or not 1900<=anio<=9999: raise ValueError('Formato o año inválido.')
     layout=json.loads((Path(__file__).parent/'vacaciones_word_layout.json').read_text(encoding='utf-8'))[formato]
     source=E.fromstring(layout['table']); templates=source.findall(w('tr'))
@@ -111,6 +155,7 @@ def generar_docx(cuenta,anio,formato):
     paragraph(body,('RÉCORD' if formato=='record' else 'INFORME')+f' DE VACACIONES {anio}',True,26)
     paragraph(body,f'{cuenta.nombre} · DNI {cuenta.dni}')
     paragraph(body,f'Vacaciones vigentes del 01/01/{anio} al 31/12/{anio}.')
+    saldo_documento(body,cuenta)
     if formato=='record':
         current=resumen(cuenta)
         source.append(row_from(templates[0],['N° DOCUMENTO',cuenta.dni,cuenta.nombre],True))
@@ -119,7 +164,7 @@ def generar_docx(cuenta,anio,formato):
         for offset in range(0,len(years),4):
             chunk=years[offset:offset+4]; labels=chunk+['']*(4-len(chunk))
             source.append(row_from(templates[1],['',*labels,'Total','Saldo'],True))
-            source.append(row_from(templates[2],['Programado',*[num(cuenta.asignaciones[y]) if y in chunk else '' for y in labels],num(current['programado']) if not offset else '',num(current['pendiente']) if not offset else ''],True))
+            source.append(row_from(templates[2],['Programado',*[num(cuenta.asignaciones[y]) if cuenta.asignaciones.get(y) is not None else '' for y in labels],num(current['programado']) if not offset else '',num(current['pendiente']) if not offset else ''],True))
         source.append(row_from(templates[3],['Memo','Del','Al','Días','Observaciones','Periodo',''],True))
         for item in rows:
             m=item['obj']
@@ -142,7 +187,10 @@ def generar_docx(cuenta,anio,formato):
     body.append(source)
     if not rows: paragraph(body,'Sin vacaciones vigentes con fechas y días registrados para este año.')
     if formato=='record': paragraph(body,'Programado y saldo: acumulados actuales de la ficha. Total utilizado: movimientos del año seleccionado.',size=18)
-    for warning in warnings: paragraph(body,warning,size=18)
+    if con_observaciones:
+        paragraph(body,'OBSERVACIONES',True)
+        for warning in list(dict.fromkeys(observaciones_control(cuenta)+warnings)) or ['Sin incongruencias detectadas en los datos revisados.']:
+            paragraph(body,warning,size=18)
     body.append(E.fromstring(layout['section']))
     content_types='<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>'
     relns='http://schemas.openxmlformats.org/package/2006/relationships'
@@ -152,4 +200,47 @@ def generar_docx(cuenta,anio,formato):
     out=BytesIO()
     with ZipFile(out,'w',ZIP_DEFLATED) as z:
         for name,data in package.items(): z.writestr(name,data)
+    return out.getvalue()
+
+
+def generar_integrado(cuenta):
+    years=anios_disponibles(cuenta)
+    if not years:
+        # Una ficha sin fechas ni asignaciones también debe poder documentarse.
+        from django.utils import timezone
+        years=[timezone.localdate().year]
+    package=None; root=None; body=None; section=None
+    warnings=observaciones_control(cuenta)
+    for year in years:
+        _,year_warnings=movimientos_del_anio(cuenta,year)
+        warnings.extend(f'{year}: {note}' for note in year_warnings)
+        for kind in ('record','informe'):
+            with ZipFile(BytesIO(generar_docx(cuenta,year,kind,con_observaciones=False))) as archive:
+                parts={name:archive.read(name) for name in archive.namelist()}
+            doc=E.fromstring(parts['word/document.xml']); content=doc.find(w('body'))
+            next_section=content.find(w('sectPr')); content.remove(next_section)
+            if package is None:
+                package=parts; root=doc; body=content
+                paragraph_intro=E.Element(w('p'))
+                intro_run=E.SubElement(paragraph_intro,w('r'))
+                E.SubElement(intro_run,w('t')).text='RÉCORD E INFORME INTEGRADOS DE VACACIONES · TODOS LOS AÑOS'
+                body.insert(0,paragraph_intro)
+            else:
+                # Cada cuadro conserva orientación y márgenes de su modelo.
+                p=E.SubElement(body,w('p')); props=E.SubElement(p,w('pPr'))
+                break_type=section.find(w('type'))
+                if break_type is None:
+                    break_type=E.Element(w('type')); section.insert(0,break_type)
+                break_type.set(w('val'),'nextPage')
+                props.append(section)
+                body.extend(list(content))
+            section=next_section
+    paragraph(body,'OBSERVACIONES GENERALES',True)
+    for note in list(dict.fromkeys(warnings)) or ['Sin incongruencias detectadas en los datos revisados.']:
+        paragraph(body,note,size=18)
+    body.append(section)
+    package['word/document.xml']=E.tostring(root,encoding='utf-8',xml_declaration=True)
+    out=BytesIO()
+    with ZipFile(out,'w',ZIP_DEFLATED) as archive:
+        for name,data in package.items(): archive.writestr(name,data)
     return out.getvalue()

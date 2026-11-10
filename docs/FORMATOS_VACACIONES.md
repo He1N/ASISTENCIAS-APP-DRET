@@ -2,7 +2,11 @@
 
 Desde el detalle de una ficha, «Generar formato» abre la selección de año y de
 Récord, Informe o Ambos. Se requiere lectura del control y permiso de exportación.
-Ambos descarga un ZIP con dos DOCX editables. No hay generación general.
+Ambos descarga un ZIP con dos DOCX editables. La opción predeterminada «Récord e
+informe integrados» descarga un único Word con ambos cuadros por cada año de la
+persona y observaciones generales al final. Incluye años con asignaciones,
+periodos y fechas vigentes, así como los años intermedios de intervalos; no exige
+elegir año. No hay generación general de varias personas.
 
 Se usan solo movimientos vigentes del control independiente. No se mezclan con
 justificaciones de asistencia. El año corresponde al intervalo Del/Al, no al
@@ -18,9 +22,17 @@ No reconstruye un saldo histórico al cierre del año. Se aclara esto en el Word
 
 No se inventan fechas para ajustes sin Del/Al. Aparece una nota con la cantidad
 declarada. Si un intervalo cruza años y sus días declarados no coinciden con la
-duración calendaria, debe corregirse antes de dividirlo; no se prorratea un ajuste
+duración calendaria, se explica en observaciones y no se distribuye en los
+cuadros anuales; conserva su consumo en el acumulado. No se prorratea un ajuste
 desconocido. Los permisos Ley (09) y movimientos sin consumo positivo no se
 distribuyen como días de vacaciones.
+
+Ambos formatos muestran asignación, consumo vigente, saldo acumulado actual y
+exceso exacto cuando el saldo es negativo. No son saldos históricos al cierre
+del año ni una determinación automática de derechos. Al final se señalan códigos
+sin regla, días sin confirmar, fechas faltantes o invertidas, discrepancias de
+cantidades y posibles superposiciones (que pueden corresponder a medias
+jornadas). Las observaciones no alteran datos ni bloquean la descarga.
 
 `vacaciones_word_layout.json` contiene solo estilos, secciones y cuadros vacíos
 extraídos de los dos modelos del responsable. No contiene los documentos

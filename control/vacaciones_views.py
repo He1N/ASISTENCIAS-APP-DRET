@@ -1,4 +1,3 @@
-from decimal import Decimal
 import re
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
@@ -47,20 +46,28 @@ def ficha(request,pk):
 def formatos(request,pk):
     from django import forms
     from django.utils import timezone
-    from .vacaciones_word import generar_docx
+    from .vacaciones_word import generar_docx, generar_integrado, anios_disponibles
     from io import BytesIO
     from zipfile import ZipFile,ZIP_DEFLATED
-    c=get_object_or_404(CuentaVacacion,pk=pk,eliminada=False)
+    c=get_object_or_404(CuentaVacacion.objects.prefetch_related('movimientos'),pk=pk,eliminada=False)
     class Opciones(forms.Form):
-        anio=forms.IntegerField(label='Año de las fechas Del/Al',min_value=1900,max_value=9999,initial=timezone.localdate().year)
-        formato=forms.ChoiceField(label='Formato',choices=[('record','Récord'),('informe','Informe'),('ambos','Ambos (archivo ZIP)')])
+        anio=forms.IntegerField(label='Año de las fechas Del/Al (solo formatos anuales)',required=False,min_value=1900,max_value=9999,initial=timezone.localdate().year)
+        formato=forms.ChoiceField(label='Formato',choices=[('integrado','Récord e informe integrados · todos los años (Word)'),('record','Récord anual'),('informe','Informe anual'),('ambos','Ambos anuales (archivo ZIP)')])
+        def clean(self):
+            data=super().clean()
+            if data.get('formato')!='integrado' and not data.get('anio'):
+                self.add_error('anio','Indique el año para el formato anual.')
+            return data
     form=Opciones(request.GET if request.GET.get('generar') else None)
-    years=sorted({d.year for m in c.movimientos.filter(estado='VIGENTE') for d in (m.inicio,m.fin) if d},reverse=True)
+    years=anios_disponibles(c)
     if form.is_bound and form.is_valid():
         year=form.cleaned_data['anio']; choice=form.cleaned_data['formato']
         name=re.sub(r'[^\w .-]','',c.nombre).strip() or c.dni
         try:
-            if choice=='ambos':
+            if choice=='integrado':
+                data=generar_integrado(c); filename=f'Record_informe_{name}_todos_los_anios.docx'
+                mime='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            elif choice=='ambos':
                 out=BytesIO()
                 with ZipFile(out,'w',ZIP_DEFLATED) as z:
                     for kind in ['record','informe']: z.writestr(f'{kind}_{name}_{year}.docx',generar_docx(c,year,kind))
@@ -88,10 +95,8 @@ def editar(request,pk=None,movimiento=None,nuevo=False):
         ids=[pk] if pk else []
         if target_id.isdigit(): ids.append(int(target_id))
         locked=list(CuentaVacacion.objects.select_for_update().filter(pk__in=ids).order_by('pk'))
-        balances={a.pk:resumen(a)['pendiente'] for a in locked}
         c=get_object_or_404(CuentaVacacion,pk=pk,eliminada=False) if pk else CuentaVacacion()
         obj=(MovimientoVacacion(cuenta=c) if nuevo else get_object_or_404(MovimientoVacacion,pk=movimiento,cuenta=c)) if (movimiento or nuevo) else c
-        baseline=resumen(c)['pendiente'] if c.pk else Decimal(0)
         before=snapshot(obj) if obj.pk else None
         Form=MovimientoForm if isinstance(obj,MovimientoVacacion) else CuentaForm
         form=Form(request.POST or None,instance=obj)
@@ -99,26 +104,19 @@ def editar(request,pk=None,movimiento=None,nuevo=False):
             if obj.pk and form.cleaned_data['version'] != obj.updated_at.isoformat():
                 form.add_error(None,'La ficha cambió mientras editaba. Recargue antes de guardar.')
             else:
-                old=baseline
                 changed=form.save(commit=False)
                 if isinstance(changed,CuentaVacacion):
                     changed.asignaciones={str(y):str(form.cleaned_data[f'anio_{y}']) if form.cleaned_data.get(f'anio_{y}') is not None else None for y in range(2022,2031)}
                 changed.save()
                 c.refresh_from_db()
-                after=resumen(c)['pendiente']
-                target_deficit=False
-                if isinstance(changed,MovimientoVacacion) and changed.cuenta_id!=c.pk:
-                    target=resumen(changed.cuenta)['pendiente']
-                    target_deficit=target<min(balances.get(changed.cuenta_id,Decimal(0)),Decimal(0))
-                # Permitir resolver gradualmente un déficit legado, nunca aumentarlo.
-                if (after<0 and after<min(old,Decimal(0))) or target_deficit:
-                    transaction.set_rollback(True)
-                    form.add_error(None,'Este cambio genera o agrava un saldo negativo. Revise días y asignaciones.')
-                else:
-                    registrar(changed,request.user,'editar' if before else 'crear',before,
-                              {'motivo':form.cleaned_data.get('motivo','')})
-                    messages.success(request,'Cambio guardado y auditado.')
-                    return redirect('vacacion_ficha',pk=c.pk)
+                registrar(changed,request.user,'editar' if before else 'crear',before,
+                          {'motivo':form.cleaned_data.get('motivo','')})
+                messages.success(request,'Cambio guardado y auditado.')
+                affected=changed.cuenta if isinstance(changed,MovimientoVacacion) else c
+                saldo=resumen(affected)['pendiente']
+                if saldo<0:
+                    messages.warning(request,f'Saldo negativo: {saldo} días. El consumo excede las asignaciones registradas en {-saldo} días.')
+                return redirect('vacacion_ficha',pk=affected.pk)
     return render(request,'control/formulario.html',dict(form=form,encabezado='Editar control de vacaciones',
         titulo='Control de vacaciones',tipo='control_vacaciones',url_cancelar=reverse('vacacion_ficha',args=[pk]) if pk else reverse('vacacion_lista')))
 

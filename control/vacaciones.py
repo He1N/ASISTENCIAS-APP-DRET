@@ -26,8 +26,7 @@ def resumen(cuenta):
     issues = []
     blockers = []
     if pending < 0:
-        issues.append('El histórico supera las asignaciones: requiere corrección')
-        blockers.append(issues[-1])
+        issues.append(f'Saldo negativo: {pending} días. El consumo supera las asignaciones registradas en {-pending} días.')
     if any(r['pendiente'] and r['estado']=='VIGENTE' for r in rows):
         issues.append('Movimientos del Excel pendientes de revisión (código o días)')
     if any(r['estado']=='VIGENTE' and (r['dias'] is None or r.get('duplicado')) for r in rows):

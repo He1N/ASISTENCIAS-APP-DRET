@@ -285,3 +285,16 @@ dividiendo los intervalos que cruzan diciembre y enero. El informe muestra núme
 de día por mes y lunes a domingo; cuenta los fines de semana dentro del intervalo.
 Probar y entregar ejemplos locales antes de autorizar la publicación. No modificar
 datos al generar. Véase docs/FORMATOS_VACACIONES.md.
+
+## 17. Saldos negativos y formato integral autorizados el 09/11/2026
+
+Permitir crear y agravar saldos negativos al registrar o editar movimientos y
+asignaciones, conservando auditoría y validación de cantidades no negativas.
+Esta instrucción sustituye la restricción de déficit de la sección 14.
+Mostrar en Récord e Informe asignaciones, consumo, saldo acumulado actual y
+exceso de días respecto a las asignaciones. Agregar un único Word integrado con
+Récord e Informe por cada año registrado, incluyendo asignaciones y años
+intermedios de los intervalos. Colocar al final observaciones sobre saldos,
+intervalos incompletos, discrepancias, códigos pendientes y superposiciones.
+Las incongruencias se documentan sin modificar los datos ni inventar repartos.
+El responsable autoriza aplicar estos cambios tanto en Git como en producción.

@@ -43,10 +43,11 @@ en el detalle exportado.
 
 ## Saldos y exportación
 
-Los déficits legados se muestran como incidencias: nunca se ocultan convirtiendo
-el saldo a cero. Se permite corregirlos progresivamente; ninguna edición del
-control puede crear o agravar un déficit. Esta validación solo aplica al control
-independiente del Excel, no al registro de asistencias.
+Desde el 09/11/2026 se permite crear o agravar saldos negativos al registrar o
+editar movimientos y asignaciones. Se conserva el saldo real, la auditoría y un
+aviso con los días de exceso; no se añaden asignaciones ni se convierte a cero.
+Las cantidades de días del movimiento siguen siendo no negativas. El cambio
+solo aplica al control independiente, sin cruzar registros de asistencias.
 
 Por indicación del responsable, la exportación no exige revisión individual y no
 se bloquea por incidencias históricas. Conserva los datos disponibles, incluidos

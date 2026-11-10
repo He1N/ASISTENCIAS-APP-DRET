@@ -6,5 +6,5 @@
 {{ form.non_field_errors }}
 {% for field in form %}<div class="campo"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
 <p class="ayuda">Años con fechas registradas: {% for anio in anios %}{{ anio }}{% if not forloop.last %}, {% endif %}{% empty %}ninguno{% endfor %}. Puede escribir otro año.</p>
-<p>Solo vacaciones vigentes. Los intervalos se limitan al año elegido e incluyen los sábados y domingos comprendidos.</p>
+<p>El Word integrado reúne el récord y el informe de todos los años registrados; no necesita elegir año. Los formatos anuales se limitan al año elegido. Incluyen sábados y domingos comprendidos, saldo acumulado, exceso de consumo y observaciones al final.</p>
 <button type="submit">Descargar Word</button></form></section>{% endblock %}

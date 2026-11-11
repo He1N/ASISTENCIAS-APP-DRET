@@ -206,7 +206,7 @@ def generar_docx(cuenta,anio,formato):
         paragraph(body,'',size=6)
         detail=[[item['inicio'].strftime('%d/%m/%Y'),item['fin'].strftime('%d/%m/%Y'),num(item['dias']),item['obj'].periodo,item['obj'].observaciones] for item in rows]
         detail.append(['TOTAL DEL AÑO','',num(sum((item['dias'] for item in rows),Decimal(0))),'',''])
-        source=tabla_datos(['DEL','AL','DÍAS','PERIODO','SUSTENTO / OBSERVACIÓN'],detail,[1500,1500,750,950,4200])
+        source=tabla_datos(['DEL','AL','DÍAS','PERIODO','SUSTENTO / OBSERVACIÓN'],detail,[1500,1500,750,1200,3950])
     else:
         source.append(row_from(templates[0],['MES / VACACIONES','LUNES','MARTES','MIÉRCOLES','JUEVES','VIERNES','SÁBADO','DOMINGO'],True))
         for month in range(1,13):

@@ -81,6 +81,22 @@ class RegimenesTests(TestCase):
         self.assertIn('Sin mes definido',text)
         self.assertNotIn('OBSERVACIONES',text)
         self.assertNotIn('sin distribución mensual fiable',text)
+
+    def test_media_jornada_solo_fecha_o_inicio_suma_cero_cinco_sin_alterar_datos(self):
+        for code,start,recorded in [('32',None,date(2026,8,20)),('32',date(2026,8,21),None),('05',None,date(2026,8,22))]:
+            MovimientoVacacion.objects.create(cuenta=self.account,codigo=code,dias=Decimal('.5'),
+                inicio=start,fecha=recorded,observaciones='SUSTENTO MEDIA JORNADA')
+        rows,_=movimientos_del_anio(self.account,2026)
+        self.assertEqual(len(rows),3)
+        self.assertTrue(all(row['inicio']==row['fin'] and row['dias']==Decimal('.5') for row in rows))
+        d=distribucion_mensual(rows)
+        self.assertEqual(sum(d['meses'][7]),Decimal('1.5'))
+        self.assertFalse(self.account.movimientos.filter(fin__isnull=False).exists())
+        for kind in ('record','informe'):
+            root=E.fromstring(ZipFile(BytesIO(generar_docx(self.account,2026,kind))).read('word/document.xml'))
+            table=root.find(w('body')).findall(w('tbl'))[-1]
+            values=[[''.join(c.itertext()) for c in row.findall(w('tc'))] for row in table.findall(w('tr'))]
+            self.assertEqual(values,[['MES','DÍAS'],['AGOSTO','1,5'],['TOTAL','1,5']])
     def test_regimen_editado_en_ficha_se_refleja_en_trabajador(self):
         self.client.force_login(self.user)
         r=self.client.post(reverse('vacacion_editar',args=[self.account.pk]),dict(

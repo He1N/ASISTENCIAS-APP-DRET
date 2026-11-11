@@ -356,3 +356,9 @@ MovimientoVacacion.observaciones. Aplica al récord individual y a sus cuadros
 dentro del ZIP y del integrado. Mantener el informe simple, sin esta columna,
 y no recuperar secciones de incidencias ni observaciones generales. Conservar
 la tabla mensual y los cálculos existentes.
+
+Ampliación: incluir también las vacaciones de media jornada confirmadas como
+0,5 días en récord, informe y sumas mensuales. Para esos registros de código 32
+o legados 05 con 0,5, si falta Al se trata la fecha Del o Fecha registrada como
+fecha única de la media jornada, sin modificar el dato original ni descontar
+otra vez el consumo. No extrapolar esta regla a códigos desconocidos.

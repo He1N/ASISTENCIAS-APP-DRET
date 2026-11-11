@@ -39,22 +39,28 @@ def movimientos_del_anio(cuenta,anio):
     rows=[]; warnings=[]
     for m in cuenta.movimientos.all():
         if m.estado!='VIGENTE' or m.codigo=='09': continue
-        if not m.inicio or not m.fin or m.fin<m.inicio:
+        inicio,fin=m.inicio,m.fin
+        # La media jornada confirmada ocupa una fecha; los legados suelen
+        # conservarla solo en Fecha o Del. No modificar el registro original.
+        if m.codigo in {'05','32'} and m.dias==Decimal('.5'):
+            inicio=inicio or m.fecha
+            fin=fin or inicio
+        if not inicio or not fin or fin<inicio:
             # No atribuir a un año un intervalo desconocido.
             if str(m.periodo)==str(anio) or (m.fecha and m.fecha.year==anio):
                 warnings.append(f'Registro {m.pk}: {num(m.dias) if m.dias is not None else "sin cantidad de"} días declarados sin Del/Al válidos. No se asignaron fechas ni se incluyó en el total del año.')
             continue
-        start=max(m.inicio,date(anio,1,1)); end=min(m.fin,date(anio,12,31))
+        start=max(inicio,date(anio,1,1)); end=min(fin,date(anio,12,31))
         if start>end: continue
         if m.dias is None:
             warnings.append(f'Registro {m.pk}: sin cantidad de días; no se distribuyó en el calendario.')
             continue
         if m.dias<=0: continue
         quantity=m.dias
-        complete=(m.fin-m.inicio).days+1
-        if start!=m.inicio or end!=m.fin:
+        complete=(fin-inicio).days+1
+        if start!=inicio or end!=fin:
             if quantity!=complete:
-                warnings.append(f'Registro {m.pk}: cruza de año ({m.inicio:%d/%m/%Y} al {m.fin:%d/%m/%Y}) y declara {num(quantity)} días para un intervalo de {complete}. Incluido en el consumo acumulado; no se repartió en los cuadros anuales para evitar atribuir días incorrectos. {m.observaciones}')
+                warnings.append(f'Registro {m.pk}: cruza de año ({inicio:%d/%m/%Y} al {fin:%d/%m/%Y}) y declara {num(quantity)} días para un intervalo de {complete}. Incluido en el consumo acumulado; no se repartió en los cuadros anuales para evitar atribuir días incorrectos. {m.observaciones}')
                 continue
             quantity=Decimal((end-start).days+1)
         if m.dias!=complete and not (m.codigo=='32' and complete==1 and m.dias==Decimal('.5')):

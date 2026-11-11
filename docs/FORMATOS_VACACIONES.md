@@ -17,6 +17,10 @@ Se conservan las medias jornadas y las cantidades declaradas. Si un intervalo
 no permite distribuir su cantidad sin inventar datos, la tabla incluye esa
 cantidad como «Sin mes definido». Las reglas de selección anual y recorte de
 intervalos entre años no cambian. No se asignan fechas que no estén registradas.
+Las medias jornadas confirmadas con 0,5 días se incluyen aunque el legado no
+tenga Al: se usa Del o, si falta, la Fecha registrada, como fecha única de la
+media jornada. No se cambian las fechas ni los saldos guardados. Esto incluye
+los legados de código 05 con 0,5 días y los de Vacaciones 1/2 Jornada (32).
 
 Desde «Generar formato» se elige Récord, Informe, ambos en ZIP o un único Word
 integrado con ambos cuadros para todos los años registrados. El sustento aparece

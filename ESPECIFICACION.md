@@ -347,3 +347,12 @@ días y periodo; informe con calendario de lunes a domingo. Ambos muestran una
 tabla de dos columnas Mes / Días, meses con consumo y TOTAL. Conservar las
 reglas de cálculo, los negativos y los datos originales; cantidades sin reparto
 mensual fiable aparecen solo como «Sin mes definido» en la tabla numérica.
+
+## 21. Sustento del movimiento en el récord
+
+El responsable aclara que el récord sí debe conservar el sustento original del
+movimiento. Añadir únicamente la columna Sustento / observación con el texto de
+MovimientoVacacion.observaciones. Aplica al récord individual y a sus cuadros
+dentro del ZIP y del integrado. Mantener el informe simple, sin esta columna,
+y no recuperar secciones de incidencias ni observaciones generales. Conservar
+la tabla mensual y los cálculos existentes.

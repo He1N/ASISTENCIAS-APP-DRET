@@ -144,7 +144,7 @@ def tabla_datos(headers,rows,widths):
             E.SubElement(cp,w('vAlign'),{w('val'):'center'})
             p=E.SubElement(c,w('p'));pp=E.SubElement(p,w('pPr'))
             E.SubElement(pp,w('spacing'),{w('before'):'20',w('after'):'20'})
-            E.SubElement(pp,w('jc'),{w('val'):'left' if len(widths)==3 and index==1 else 'center'})
+            E.SubElement(pp,w('jc'),{w('val'):'left' if i>0 and headers[index]=='SUSTENTO / OBSERVACIÓN' else 'center'})
             r=E.SubElement(p,w('r'));pr=E.SubElement(r,w('rPr'))
             E.SubElement(pr,w('rFonts'),{w('ascii'):'Arial',w('hAnsi'):'Arial'})
             if i==0 or total:E.SubElement(pr,w('b'))
@@ -204,9 +204,9 @@ def generar_docx(cuenta,anio,formato):
             source.append(row_from(templates[2],['Programado',*[num(cuenta.asignaciones[y]) if cuenta.asignaciones.get(y) is not None else '' for y in labels],num(current['programado']) if not offset else '',num(current['pendiente']) if not offset else ''],True))
         body.append(source)
         paragraph(body,'',size=6)
-        detail=[[item['inicio'].strftime('%d/%m/%Y'),item['fin'].strftime('%d/%m/%Y'),num(item['dias']),item['obj'].periodo] for item in rows]
-        detail.append(['TOTAL DEL AÑO','',num(sum((item['dias'] for item in rows),Decimal(0))),''])
-        source=tabla_datos(['DEL','AL','DÍAS','PERIODO'],detail,[2400,2400,1700,2400])
+        detail=[[item['inicio'].strftime('%d/%m/%Y'),item['fin'].strftime('%d/%m/%Y'),num(item['dias']),item['obj'].periodo,item['obj'].observaciones] for item in rows]
+        detail.append(['TOTAL DEL AÑO','',num(sum((item['dias'] for item in rows),Decimal(0))),'',''])
+        source=tabla_datos(['DEL','AL','DÍAS','PERIODO','SUSTENTO / OBSERVACIÓN'],detail,[1500,1500,750,950,4200])
     else:
         source.append(row_from(templates[0],['MES / VACACIONES','LUNES','MARTES','MIÉRCOLES','JUEVES','VIERNES','SÁBADO','DOMINGO'],True))
         for month in range(1,13):

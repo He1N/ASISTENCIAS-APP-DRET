@@ -219,7 +219,7 @@ class ControlVacacionesTests(TestCase):
     def test_saldo_y_observaciones_en_ambos_formatos_e_integrado(self):
         from .vacaciones_word import generar_docx,generar_integrado,anios_disponibles
         MovimientoVacacion.objects.create(cuenta=self.account,codigo='05',dias=45,
-            inicio=date(2025,1,1),fin=date(2025,2,14),periodo='2024',observaciones='NOTA DETALLADA QUE NO DEBE SALIR')
+            inicio=date(2025,1,1),fin=date(2025,2,14),periodo='2024',observaciones='FUT: SOLICITO PERMISO A CUENTA DE VACACIONES EL DIA DE 19')
         MovimientoVacacion.objects.create(cuenta=self.account,codigo='32',dias=Decimal('.5'),
             inicio=date(2025,1,1),fin=date(2025,1,1),periodo='2025')
         MovimientoVacacion.objects.create(cuenta=self.account,codigo='88',dias=2,periodo='2023')
@@ -234,7 +234,12 @@ class ControlVacacionesTests(TestCase):
             self.assertIn('Exceso: 9,5 días',text)
             self.assertNotIn('OBSERVACIONES',text)
             self.assertNotIn('observaciones',text.casefold())
-            self.assertNotIn('NOTA DETALLADA QUE NO DEBE SALIR',text)
+            if kind=='informe':
+                self.assertNotIn('FUT: SOLICITO PERMISO A CUENTA DE VACACIONES EL DIA DE 19',text)
+                self.assertNotIn('SUSTENTO / OBSERVACIÓN',text)
+            else:
+                self.assertIn('FUT: SOLICITO PERMISO A CUENTA DE VACACIONES EL DIA DE 19',text)
+                self.assertIn('SUSTENTO / OBSERVACIÓN',text)
             self.assertNotIn('Posible superposición',text)
             self.assertNotIn('sin Del/Al válidos',text)
             if kind=='integrado':

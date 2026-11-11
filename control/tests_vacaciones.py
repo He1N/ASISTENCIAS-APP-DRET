@@ -43,7 +43,7 @@ class ControlVacacionesTests(TestCase):
         root=ET.fromstring(ZipFile(BytesIO(data)).read('word/document.xml'))
         table=root.find('.//'+w('tbl')); row=table.findall(w('tr'))[1]
         values=[''.join(c.itertext()) for c in row.findall(w('tc'))]
-        self.assertEqual(values,['ENERO','','','','1','2','3','',''])
+        self.assertEqual(values,['ENERO','','','','1','2','3',''])
         record=ZipFile(BytesIO(generar_docx(self.account,2026,'record'))).read('word/document.xml').decode()
         self.assertNotIn('ANULADO NO EXPORTAR',record)
         self.assertIn('01/01/2026',record); self.assertNotIn('29/12/2025',record)
@@ -61,8 +61,8 @@ class ControlVacacionesTests(TestCase):
         response=self.client.get(url,{'generar':'1','anio':'2026','formato':'informe'})
         self.assertEqual(response['Content-Type'],'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
         text=ZipFile(BytesIO(response.content)).read('word/document.xml').decode()
-        self.assertIn('cruza de año',text)
-        self.assertIn('no se repartió',text)
+        self.assertNotIn('cruza de año',text)
+        self.assertNotIn('OBSERVACIONES',text)
         user=get_user_model().objects.create_user('sin_exportacion',password='sintetica')
         self.client.force_login(user); self.assertEqual(self.client.get(url).status_code,403)
 
@@ -75,8 +75,8 @@ class ControlVacacionesTests(TestCase):
         root=ET.fromstring(ZipFile(BytesIO(generar_docx(self.account,2026,'informe'))).read('word/document.xml'))
         rows=root.find('.//'+w('tbl')).findall(w('tr'))[1:]
         values=[[''.join(c.itertext()) for c in r.findall(w('tc'))] for r in rows]
-        self.assertEqual(values[0][-3:-1],['10','11'])
-        self.assertEqual(values[1][-3:-1],['17','18'])
+        self.assertEqual(values[0][-2:],['10','11'])
+        self.assertEqual(values[1][-2:],['17','18'])
         self.assertEqual(sum(sum(v.startswith('9 (') for v in row[1:8]) for row in values if not row[0].startswith('TOTAL')),1)
 
     def test_detalle_cronologico_por_fecha_con_sin_fecha_al_final(self):
@@ -219,7 +219,7 @@ class ControlVacacionesTests(TestCase):
     def test_saldo_y_observaciones_en_ambos_formatos_e_integrado(self):
         from .vacaciones_word import generar_docx,generar_integrado,anios_disponibles
         MovimientoVacacion.objects.create(cuenta=self.account,codigo='05',dias=45,
-            inicio=date(2025,1,1),fin=date(2025,2,14),periodo='2024')
+            inicio=date(2025,1,1),fin=date(2025,2,14),periodo='2024',observaciones='NOTA DETALLADA QUE NO DEBE SALIR')
         MovimientoVacacion.objects.create(cuenta=self.account,codigo='32',dias=Decimal('.5'),
             inicio=date(2025,1,1),fin=date(2025,1,1),periodo='2025')
         MovimientoVacacion.objects.create(cuenta=self.account,codigo='88',dias=2,periodo='2023')
@@ -231,14 +231,16 @@ class ControlVacacionesTests(TestCase):
             data=generar_integrado(self.account) if kind=='integrado' else generar_docx(self.account,2025,kind)
             text=ZipFile(BytesIO(data)).read('word/document.xml').decode()
             self.assertIn('SALDO NEGATIVO',text)
-            self.assertIn('consumo excedido en 9,5 días',text)
-            self.assertIn('OBSERVACIONES',text)
-            self.assertIn('Posible superposición',text)
-            self.assertIn('sin Del/Al válidos',text)
+            self.assertIn('Exceso: 9,5 días',text)
+            self.assertNotIn('OBSERVACIONES',text)
+            self.assertNotIn('observaciones',text.casefold())
+            self.assertNotIn('NOTA DETALLADA QUE NO DEBE SALIR',text)
+            self.assertNotIn('Posible superposición',text)
+            self.assertNotIn('sin Del/Al válidos',text)
             if kind=='integrado':
                 self.assertIn('RÉCORD DE VACACIONES 2027',text)
                 self.assertIn('INFORME DE VACACIONES 2028',text)
-                self.assertGreater(text.index('OBSERVACIONES GENERALES'),text.index('INFORME DE VACACIONES 2028'))
+                self.assertNotIn('OBSERVACIONES GENERALES',text)
         self.client.force_login(self.user)
         url=reverse('vacacion_formatos',args=[self.account.pk])
         response=self.client.get(url,{'generar':'1','formato':'integrado'})
@@ -254,10 +256,10 @@ class ControlVacacionesTests(TestCase):
                 MovimientoVacacion.objects.create(cuenta=self.account,codigo='88',dias=2,periodo='2023')
             data=generar_integrado(self.account)
             text=ZipFile(BytesIO(data)).read('word/document.xml').decode()
-            self.assertIn('Sin asignaciones anuales registradas',text)
+            self.assertIn('Programado: 0 días',text)
             if with_movement:
                 self.assertIn('RÉCORD DE VACACIONES 2023',text)
-                self.assertIn('consumo excedido en 2 días',text)
+                self.assertIn('Exceso: 2 días',text)
 
     def test_formulario_cancela_y_audita(self):
         self.client.force_login(self.user)

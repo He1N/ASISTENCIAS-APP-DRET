@@ -91,7 +91,9 @@ class EnlaceVacacionesTests(TestCase):
         self.assertEqual(resumen(self.account)['usado'],Decimal('.5'))
         from .vacaciones_word import generar_docx
         text=ZipFile(BytesIO(generar_docx(self.account,2026,'informe'))).read('word/document.xml').decode()
-        self.assertIn('Consultas, registro',text)
+        self.assertNotIn('Consultas, registro',text)
+        self.assertNotIn('OBSERVACIONES',text)
+        self.assertTrue(EnlaceVacacion.objects.get(justificacion=suspended).observaciones)
     def test_edicion_directa_del_control_enlazado_no_modifica_consumo(self):
         j=self.source();m=j.enlace_vacacion.movimiento
         self.client.force_login(self.user)

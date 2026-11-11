@@ -41,8 +41,8 @@ no equivale al mes calendario. No se concilia Octubre automáticamente.
 Los consumos equivalentes vigentes se enlazan sin modificar los movimientos.
 Las diferencias quedan como EXCEPCION, conservando los ajustes, anulaciones y
 suspensiones del control por decisión expresa del responsable. Sus observaciones
-comparan fechas, cantidades y documentos de ambos módulos y aparecen al final
-de la ficha y de los formatos Word. Guardar de nuevo una excepción no sustituye
+comparan fechas, cantidades y documentos de ambos módulos y se muestran en la
+aplicación. Los formatos Word simplificados no incluyen observaciones. Guardar de nuevo una excepción no sustituye
 su ajuste histórico; su resolución exige revisión administrativa explícita.
 
 La relación uno a uno impide enlazar un movimiento a dos justificaciones.

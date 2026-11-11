@@ -333,3 +333,17 @@ medias jornadas y cantidades declaradas. Cuando un intervalo no permite repartir
 la cantidad sin inventar datos, mostrar la diferencia fuera de los totales
 distribuidos y señalarla en observaciones tabulares con fechas y registros.
 Conservar todos los años, los saldos negativos y los ajustes históricos aprobados.
+
+## 20. Simplificación posterior de los formatos Word
+
+El responsable solicita quitar por completo las observaciones al generar los
+formatos y volver al diseño anterior, con una tabla sencilla de días por mes y
+su suma. Esta instrucción sustituye las observaciones y matrices de días de
+semana de las secciones 16, 17 y 19 únicamente en las descargas Word.
+No incluir observaciones generales, incidencias ni columna de observaciones de
+movimientos en récord, informe, ZIP o integrado. Conservar las incidencias en
+la aplicación. Cabecera breve con identidad, régimen y saldo; récord con fechas,
+días y periodo; informe con calendario de lunes a domingo. Ambos muestran una
+tabla de dos columnas Mes / Días, meses con consumo y TOTAL. Conservar las
+reglas de cálculo, los negativos y los datos originales; cantidades sin reparto
+mensual fiable aparecen solo como «Sin mes definido» en la tabla numérica.

@@ -67,18 +67,20 @@ class RegimenesTests(TestCase):
         self.assertEqual(sum(d['meses'][0]),2);self.assertEqual(sum(d['meses'][1]),Decimal('2.5'))
         self.assertEqual(d['total'],Decimal('4.5'))
         root=E.fromstring(ZipFile(BytesIO(generar_docx(self.account,2026,'informe'))).read('word/document.xml'))
-        rows=root.find('.//'+w('tbl')).findall(w('tr'))
+        tables=root.find(w('body')).findall(w('tbl'))
+        rows=tables[-1].findall(w('tr'))
         values=[[''.join(c.itertext()) for c in row.findall(w('tc'))] for row in rows]
-        totals=[r for r in values if r[0].startswith('TOTAL')]
-        self.assertEqual(totals[-1][-1],'4,5')
-        for row in totals:self.assertEqual(sum(Decimal(v.replace(',','.')) for v in row[1:8]),Decimal(row[8].replace(',','.')))
+        self.assertEqual(values,[['MES','DÍAS'],['ENERO','2'],['FEBRERO','2,5'],['TOTAL','4,5']])
+        self.assertEqual(sum(Decimal(r[1].replace(',','.')) for r in values[1:-1]),Decimal('4.5'))
+        self.assertEqual(len(tables[0].findall(w('tr'))[0].findall(w('tc'))),8)
     def test_cantidad_incongruente_no_se_reparte_y_se_explica(self):
         MovimientoVacacion.objects.create(cuenta=self.account,codigo='05',inicio=date(2026,3,1),fin=date(2026,3,5),dias=3)
         rows,_=movimientos_del_anio(self.account,2026);d=distribucion_mensual(rows)
         self.assertEqual(d['no_distribuido'],3);self.assertEqual(d['total'],0)
         text=ZipFile(BytesIO(generar_docx(self.account,2026,'record'))).read('word/document.xml').decode()
-        self.assertIn('sin distribución mensual fiable',text)
-        self.assertIn('FECHAS',text);self.assertIn('REGISTROS',text)
+        self.assertIn('Sin mes definido',text)
+        self.assertNotIn('OBSERVACIONES',text)
+        self.assertNotIn('sin distribución mensual fiable',text)
     def test_regimen_editado_en_ficha_se_refleja_en_trabajador(self):
         self.client.force_login(self.user)
         r=self.client.post(reverse('vacacion_editar',args=[self.account.pk]),dict(

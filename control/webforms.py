@@ -29,9 +29,14 @@ class PeriodoWebForm(VersionFormulario, PeriodoForm):
 
 
 class FiltroMaestros(forms.Form):
+    regimen_laboral = forms.ChoiceField(label='Régimen laboral',required=False)
     q = forms.CharField(label='Buscar', required=False, max_length=250)
     activo = forms.ChoiceField(label='Estado', required=False,
         choices=[('', 'Todos'), ('1', 'Activos'), ('0', 'Inactivos')])
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        from .regimenes import opciones_regimen
+        self.fields['regimen_laboral'].choices=opciones_regimen()
 
 
 class FiltroPeriodos(forms.Form):

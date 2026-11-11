@@ -1,5 +1,19 @@
 # Formatos individuales de vacaciones
 
+Actualización del 10/11/2026: el régimen laboral aparece en la cabecera. El récord
+incluye matriz mensual con lunes a domingo, sumas horizontales y total anual por
+columna. El informe mantiene las fechas del calendario e incorpora subtotales
+mensuales de días y total anual por día de semana. Las medias jornadas cuentan
+0,5; una fecha con varios consumos muestra su cantidad entre paréntesis. Las
+superposiciones se conservan y señalan en las observaciones, sin corregir datos.
+
+Si un intervalo de varios días declara una cantidad distinta de su duración,
+no se prorratea arbitrariamente: se marca con † y se muestra la cantidad sin
+distribución fiable, junto al total distribuido y al total declarado del año.
+No se suman números de fechas. Las observaciones usan una tabla de fechas,
+detalle y registros; en el integrado se reúnen al final. Los encabezados de
+las tablas se repiten al continuar a otra página.
+
 Desde el detalle de una ficha, «Generar formato» abre la selección de año y de
 Récord, Informe o Ambos. Se requiere lectura del control y permiso de exportación.
 Ambos descarga un ZIP con dos DOCX editables. La opción predeterminada «Récord e

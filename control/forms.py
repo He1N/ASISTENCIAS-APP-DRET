@@ -20,12 +20,15 @@ class TrabajadorForm(EstiloForm):
     confirmar_coincidencias = forms.BooleanField(required=False, label='He revisado las coincidencias; conservar esta ficha independiente')
     class Meta:
         model = Trabajador
-        fields = ['apellidos_nombres', 'dni', 'area', 'activo']
+        fields = ['apellidos_nombres', 'dni', 'regimen_laboral', 'area', 'activo']
     def clean_dni(self):
         value = self.cleaned_data['dni']
         if value and (not value.isdigit() or len(value) != 8):
             raise forms.ValidationError('El DNI debe contener 8 dígitos o quedar vacío.')
         return value or None
+    def clean_regimen_laboral(self):
+        from .regimenes import normalizar_regimen
+        return normalizar_regimen(self.cleaned_data['regimen_laboral'])
     def clean(self):
         data = super().clean()
         q = Q(nombre_busqueda=normalizar(data.get('apellidos_nombres')))

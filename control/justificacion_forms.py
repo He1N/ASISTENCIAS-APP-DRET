@@ -47,6 +47,8 @@ class JustificacionForm(VersionFormulario, EstiloForm):
 
 
 class FiltroJustificaciones(forms.Form):
+    regimen_laboral = forms.ChoiceField(label='Régimen laboral',required=False)
+    agrupar_regimen = forms.BooleanField(label='Exportar Excel agrupado por régimen laboral',required=False)
     q = forms.CharField(label='Nombre, DNI, CUD u observaciones', required=False, max_length=250)
     trabajador = forms.ModelChoiceField(label='Trabajador', queryset=Trabajador.objects.all(), required=False)
     dni = forms.CharField(label='DNI (fragmento)', required=False, max_length=20)
@@ -74,6 +76,8 @@ class FiltroJustificaciones(forms.Form):
 
     def __init__(self, *args, grupo=None, **kwargs):
         super().__init__(*args, **kwargs)
+        from .regimenes import opciones_regimen
+        self.fields['regimen_laboral'].choices=opciones_regimen()
         for field in self.fields.values():
             if isinstance(field, forms.DateField):
                 field.widget = forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'})

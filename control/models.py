@@ -21,6 +21,7 @@ class Trabajador(Fechado):
     nombre_busqueda = models.CharField(max_length=300, db_index=True, editable=False)
     dni = models.CharField('DNI', max_length=20, blank=True, null=True, db_index=True)
     area = models.CharField('Área', max_length=200, blank=True)
+    regimen_laboral = models.CharField('Régimen laboral', max_length=80, blank=True)
     activo = models.BooleanField('Activo', default=True)
     class Meta:
         ordering = ['-activo', 'apellidos_nombres', 'pk']
@@ -207,6 +208,7 @@ class CuentaVacacion(Fechado):
     trabajador = models.OneToOneField(Trabajador, null=True, blank=True, on_delete=models.PROTECT)
     dni = models.CharField(max_length=20, unique=True)
     nombre = models.CharField(max_length=250)
+    regimen_laboral = models.CharField('Régimen laboral', max_length=80, blank=True)
     tipo = models.CharField(max_length=40, blank=True)
     estado = models.CharField(max_length=40, blank=True)
     habilitada = models.BooleanField(default=True)

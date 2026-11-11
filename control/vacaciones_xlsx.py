@@ -77,6 +77,9 @@ def exportar_control(results):
         templates={int(r.get('r')):deepcopy(r) for r in data}
         for row in list(data):
             if int(row.get('r'))>header: data.remove(row)
+        header_row=next(r for r in data if int(r.get('r'))==header)
+        regimen_col=34 if name=='Resumen' else 56
+        header_row.append(cell(header,regimen_col,'Régimen laboral'))
         for i,record in enumerate(records,header+1):
             r=record if name=='Resumen' else record[0]
             c=r['cuenta']; origin=c.origen if name=='Resumen' else record[1]['origen']
@@ -113,10 +116,11 @@ def exportar_control(results):
                     13:str(m['fecha'].year) if m['fecha'] else None,
                     14:f'{m["fecha"].month:02}' if m['fecha'] else None,
                     15:f'{m["fecha"].day:02}' if m['fecha'] else None})
-            for col in sorted(set(values)|set(range(1,34 if name=='Resumen' else 56))):
+            values[regimen_col]=c.regimen_laboral
+            for col in sorted(set(values)|set(range(1,35 if name=='Resumen' else 57))):
                 node.append(cell(i,col,values.get(col),styles.get(column(col)),formulas.get(col)))
         dimension=sheet.find(tag('dimension'))
-        if dimension is not None: dimension.set('ref',f'A1:{"AG" if name=="Resumen" else "BC"}{max(header,len(records)+header)}')
+        if dimension is not None: dimension.set('ref',f'A1:{"AH" if name=="Resumen" else "BD"}{max(header,len(records)+header)}')
         normalizar_hoja(sheet)
         package[key]=E.tostring(sheet,encoding='unicode')
     out=BytesIO()

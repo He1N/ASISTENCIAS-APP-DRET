@@ -7,9 +7,12 @@ from .models import CuentaVacacion, MovimientoVacacion
 class CuentaForm(EstiloForm):
     version = forms.CharField(widget=forms.HiddenInput, required=False)
     motivo = forms.CharField(widget=forms.Textarea, label='Motivo del cambio')
+    def clean_regimen_laboral(self):
+        from .regimenes import normalizar_regimen
+        return normalizar_regimen(self.cleaned_data['regimen_laboral'])
     class Meta:
         model = CuentaVacacion
-        fields = ['dni','nombre','tipo','estado','habilitada','notas']
+        fields = ['dni','nombre','regimen_laboral','tipo','estado','habilitada','notas']
 
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)

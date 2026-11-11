@@ -22,8 +22,8 @@ MAESTROS = {
     'trabajadores': {
         'modelo': Trabajador, 'formulario': TrabajadorWebForm,
         'titulo': 'Trabajadores', 'nuevo': 'Nuevo trabajador',
-        'columnas': ['Apellidos y nombres', 'DNI', 'Área', 'Estado'],
-        'campos': ['apellidos_nombres', 'dni', 'area', 'activo'],
+        'columnas': ['Apellidos y nombres', 'DNI', 'Régimen laboral', 'Área', 'Estado'],
+        'campos': ['apellidos_nombres', 'dni', 'regimen_laboral', 'area', 'activo'],
     },
     'documentos': {
         'modelo': TipoDocumento, 'formulario': DocumentoWebForm,
@@ -62,7 +62,7 @@ def consulta_url(request):
     # Se conservan solo filtros locales; nunca se admite una URL de retorno externa.
     query = request.GET.copy()
     for key in list(query):
-        if key not in ('q', 'activo', 'estado', 'page'):
+        if key not in ('q', 'activo', 'estado', 'page','regimen_laboral'):
             del query[key]
     return query
 
@@ -129,8 +129,12 @@ def maestro_lista(request, tipo):
     qs = model.objects.all()
     form_class = FiltroPeriodos if tipo == 'periodos' else FiltroMaestros
     filtros = form_class(request.GET)
+    if tipo!='trabajadores' and 'regimen_laboral' in filtros.fields:del filtros.fields['regimen_laboral']
     if filtros.is_valid():
         data = filtros.cleaned_data
+        if tipo=='trabajadores':
+            from .regimenes import filtrar_regimen
+            qs=filtrar_regimen(qs,data.get('regimen_laboral'))
         term = data['q']
         if tipo == 'periodos':
             qs = filtrar_periodos(qs, data)
@@ -206,6 +210,9 @@ def maestro_formulario(request, tipo, pk=None):
                 preparar_fechas_estado(obj)
                 obj.save()
                 registrar(obj, request.user, 'editar' if pk is not None else 'crear', antes)
+                if isinstance(obj,Trabajador):
+                    from .regimenes import propagar_regimen
+                    propagar_regimen(obj,request.user,antes)
                 messages.success(request, 'Cambios guardados.' if pk is not None else 'Registro creado.')
                 # Un permiso de escritura no concede por sí solo permiso de lectura.
                 if request.user.has_perm(f'control.view_{model._meta.model_name}'):

@@ -23,11 +23,14 @@ from .vacaciones_forms import CuentaForm, MovimientoForm
 def lista(request):
     qs=CuentaVacacion.objects.filter(eliminada=False).prefetch_related('movimientos')
     q=request.GET.get('q','').strip()[:250]
+    from .regimenes import filtrar_regimen,opciones_regimen
+    regime=request.GET.get('regimen_laboral','')[:80]
+    qs=filtrar_regimen(qs,regime)
     if q: qs=qs.filter(Q(nombre__icontains=q)|Q(dni__contains=q))
     page=Paginator(qs,25).get_page(request.GET.get('page'))
     rows=[resumen(c) for c in page]
     return render(request,'control/vacaciones/lista.html',dict(titulo='Control de vacaciones',tipo='control_vacaciones',
-        pagina=page,filas=rows,q=q,enlaces_pendientes=EnlaceVacacion.objects.filter(estado__in=['PENDIENTE','EXCEPCION']).select_related('justificacion__trabajador','cuenta')))
+        pagina=page,filas=rows,q=q,regimen_laboral=regime,regimenes=opciones_regimen(),enlaces_pendientes=EnlaceVacacion.objects.filter(estado__in=['PENDIENTE','EXCEPCION']).select_related('justificacion__trabajador','cuenta')))
 
 
 @never_cache
@@ -115,6 +118,9 @@ def editar(request,pk=None,movimiento=None,nuevo=False):
                 c.refresh_from_db()
                 registrar(changed,request.user,'editar' if before else 'crear',before,
                           {'motivo':form.cleaned_data.get('motivo','')})
+                if isinstance(changed,CuentaVacacion):
+                    from .regimenes import propagar_regimen
+                    propagar_regimen(changed,request.user,before)
                 messages.success(request,'Cambio guardado y auditado.')
                 affected=changed.cuenta if isinstance(changed,MovimientoVacacion) else c
                 saldo=resumen(affected)['pendiente']
@@ -136,9 +142,16 @@ def exportar(request,pk=None):
     qs=qs.filter(pk=pk) if pk else qs
     q=request.GET.get('q','').strip()[:250]
     if q and not pk: qs=qs.filter(Q(nombre__icontains=q)|Q(dni__contains=q))
+    if not pk:
+        from .regimenes import filtrar_regimen
+        qs=filtrar_regimen(qs,request.GET.get('regimen_laboral','')[:80])
     if pk: get_object_or_404(qs)
     results=[resumen(c) for c in qs]
-    response=HttpResponse(exportar_control(results),content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    if request.GET.get('agrupar_regimen')=='1' and not pk:
+        from .exportacion_regimen import exportar_vacaciones_agrupadas
+        data=exportar_vacaciones_agrupadas(results)
+    else:data=exportar_control(results)
+    response=HttpResponse(data,content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     filename='control-vacaciones.xlsx'
     if len(results)==1:
         nombre=re.sub(r'[<>:"/\\|?*\x00-\x1f]',' ',results[0]['cuenta'].nombre)

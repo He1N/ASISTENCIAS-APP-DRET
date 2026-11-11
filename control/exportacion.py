@@ -38,10 +38,17 @@ def respuesta_xlsx(nombre, encabezados, rows):
     return response
 
 
-def exportar_justificaciones(qs):
+def exportar_justificaciones(qs,agrupar=False):
+    if agrupar:
+        from .exportacion_regimen import exportar_consultas_agrupadas
+        from django.http import HttpResponse
+        response=HttpResponse(exportar_consultas_agrupadas(qs),content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition']='attachment; filename="consultas-por-regimen.xlsx"'
+        response['Cache-Control']='private, no-store'
+        return response
     headers = ['ID', 'Trabajador', 'DNI', 'Periodo', 'Documento', 'Código documento', 'Operación',
         'Código operación', 'Grupo', 'Fecha inicial', 'Fecha final', 'Días calendario (informativos)',
-        'Salida', 'Retorno', 'CUD', 'Observaciones', 'Fecha recepción', 'Captura', 'Plazo', 'Estado']
+        'Salida', 'Retorno', 'CUD', 'Observaciones', 'Fecha recepción', 'Captura', 'Plazo', 'Estado','Régimen laboral']
     def rows():
         for obj in qs.iterator(chunk_size=500):
             yield [obj.pk, obj.trabajador.apellidos_nombres, obj.trabajador.dni, obj.periodo.titulo,
@@ -49,5 +56,5 @@ def exportar_justificaciones(qs):
                 obj.tipo_operacion.codigo_externo, obj.tipo_operacion.get_grupo_especial_display(),
                 obj.fecha_movimiento, obj.fecha_final, obj.duracion, obj.hora_salida, obj.hora_retorno,
                 obj.cud, obj.observaciones, obj.fecha_recepcion, obj.created_at, obj.plazo,
-                'Anulada' if obj.anulada else 'Vigente']
+                'Anulada' if obj.anulada else 'Vigente',obj.trabajador.regimen_laboral]
     return respuesta_xlsx('justificaciones.xlsx', headers, rows())

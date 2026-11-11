@@ -77,6 +77,8 @@ def aplicar_filtros(filtros):
     qs = relacionados()
     if filtros.is_valid():
         data = filtros.cleaned_data
+        from .regimenes import filtrar_regimen
+        qs=filtrar_regimen(qs,data.get('regimen_laboral'),'trabajador__regimen_laboral')
         if data['q']:
             term = data['q']
             qs = qs.filter(Q(trabajador__nombre_busqueda__contains=normalizar(term)) |

@@ -133,7 +133,8 @@ def sincronizar(j,historico=False,usuario=None):
         return guardar_enlace(link,actor,before)
     if account is None:
         account=CuentaVacacion.objects.create(trabajador=j.trabajador,dni=j.trabajador.dni,
-            nombre=j.trabajador.apellidos_nombres,asignaciones={},notas='Creada desde Consultas sin asignaciones automáticas.')
+            nombre=j.trabajador.apellidos_nombres,regimen_laboral=j.trabajador.regimen_laboral,
+            asignaciones={},notas='Creada desde Consultas sin asignaciones automáticas.')
         if actor: registrar(account,actor,'crear_desde_consultas')
     ids={account.pk}
     if link.cuenta_id: ids.add(link.cuenta_id)

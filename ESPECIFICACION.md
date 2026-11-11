@@ -314,3 +314,22 @@ Conciliar únicamente el histórico de Noviembre solicitado, enlazando consumos
 inequívocos existentes. El responsable elige expresamente conservar los ajustes,
 suspensiones y anulaciones del control y señalar las diferencias para revisión.
 No recalcular los históricos de Octubre ni reactivar ajustes conservados.
+
+## 19. Régimen laboral y totales de formatos autorizados el 10/11/2026
+
+Usar la clasificación por DNI del archivo «tipos de trabajadores.xlsx», columna
+reg. Labor de Resumen. Añadir régimen laboral a trabajadores y cuentas de
+vacaciones, visible, editable y filtrable. No confundirlo con el código Tipo.
+«NO EXISTE» y las fichas ausentes de la clasificación quedan sin régimen
+informado; no inferirlo por nombre, contrato ni asignaciones. Importar solo esta
+clasificación, con previa, auditoría e idempotencia, sin reemplazar movimientos,
+justificaciones ni derechos del Excel nuevo. Conservar ceros del DNI.
+Ofrecer Excel agrupado por régimen, tanto en control vacacional como en Consultas,
+con hojas separadas, totales aplicables y configuración de impresión A4 horizontal.
+En los récords e informes, mantener la estructura del Word de referencia y añadir
+sumas de días por mes y día de semana, totales horizontales y verticales y anual.
+Las celdas calendario contienen fechas: no sumar sus números de día. Respetar
+medias jornadas y cantidades declaradas. Cuando un intervalo no permite repartir
+la cantidad sin inventar datos, mostrar la diferencia fuera de los totales
+distribuidos y señalarla en observaciones tabulares con fechas y registros.
+Conservar todos los años, los saldos negativos y los ajustes históricos aprobados.

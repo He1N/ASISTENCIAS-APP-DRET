@@ -25,7 +25,7 @@ def exigir_exportar(request):
 @require_safe
 def exportar_consultas(request):
     exigir_permiso(request.user, Justificacion, 'view'); exigir_exportar(request)
-    return exportar_justificaciones(aplicar_filtros(FiltroJustificaciones(request.GET)))
+    return exportar_justificaciones(aplicar_filtros(FiltroJustificaciones(request.GET)),agrupar=request.GET.get('agrupar_regimen')=='1')
 
 
 @never_cache
@@ -40,7 +40,7 @@ def especiales(request, grupo, exportar=False):
             if form.cleaned_data[campo]: qs = qs.filter(**{lookup: form.cleaned_data[campo]})
     if exportar:
         exigir_exportar(request)
-        return exportar_justificaciones(qs)
+        return exportar_justificaciones(qs,agrupar=request.GET.get('agrupar_regimen')=='1')
     ruta = 'vacaciones' if grupo == 'VACACIONES' else 'sindicales'
     query = request.GET.copy(); query.pop('page', None)
     titulo = 'Vacaciones' if grupo == 'VACACIONES' else 'Licencias sindicales'

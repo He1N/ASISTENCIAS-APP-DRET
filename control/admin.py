@@ -19,11 +19,14 @@ class AuditadoAdmin(admin.ModelAdmin):
         preparar_fechas_estado(obj)
         super().save_model(request, obj, form, change)
         registrar(obj, request.user, 'editar' if change else 'crear', antes)
+        if isinstance(obj,Trabajador):
+            from .regimenes import propagar_regimen
+            propagar_regimen(obj,request.user,antes)
 
 @admin.register(Trabajador)
 class TrabajadorAdmin(AuditadoAdmin):
     form = TrabajadorForm
-    list_display = ('apellidos_nombres', 'dni', 'area', 'activo')
+    list_display = ('apellidos_nombres', 'dni', 'regimen_laboral', 'area', 'activo')
     list_filter = ('activo',)
     search_fields = ('nombre_busqueda', 'dni')
     ordering = ('-activo', 'apellidos_nombres', 'pk')

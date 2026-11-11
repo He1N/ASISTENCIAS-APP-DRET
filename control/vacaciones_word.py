@@ -5,6 +5,7 @@ from datetime import date,timedelta
 from decimal import Decimal
 from io import BytesIO
 import json
+import re
 from pathlib import Path
 from xml.etree import ElementTree as E
 from zipfile import ZipFile,ZIP_DEFLATED
@@ -148,15 +149,89 @@ def paragraph(body,text,bold=False,size=22):
     if bold: E.SubElement(pr,w('b'))
     E.SubElement(r,w('t')).text=text
 
+
+def tabla_datos(headers,rows,widths):
+    table=E.Element(w('tbl'));props=E.SubElement(table,w('tblPr'))
+    E.SubElement(props,w('tblW'),{w('w'):str(sum(widths)),w('type'):'dxa'})
+    E.SubElement(props,w('tblLayout'),{w('type'):'fixed'})
+    borders=E.SubElement(props,w('tblBorders'))
+    for side in ('top','left','bottom','right','insideH','insideV'):
+        E.SubElement(borders,w(side),{w('val'):'single',w('sz'):'4',w('color'):'B7BEC8'})
+    grid=E.SubElement(table,w('tblGrid'))
+    for width in widths:E.SubElement(grid,w('gridCol'),{w('w'):str(width)})
+    for i,values in enumerate([headers,*rows]):
+        row=E.SubElement(table,w('tr'));rp=E.SubElement(row,w('trPr'));E.SubElement(rp,w('cantSplit'))
+        total=i>0 and str(values[0]).startswith('TOTAL')
+        if i==0:E.SubElement(rp,w('tblHeader'))
+        for index,(value,width) in enumerate(zip(values,widths)):
+            c=E.SubElement(row,w('tc'));cp=E.SubElement(c,w('tcPr'))
+            E.SubElement(cp,w('tcW'),{w('w'):str(width),w('type'):'dxa'})
+            if i==0 or total:E.SubElement(cp,w('shd'),{w('fill'):'E5E7EB'})
+            margins=E.SubElement(cp,w('tcMar'))
+            for side in ('top','left','bottom','right'):E.SubElement(margins,w(side),{w('w'):'65',w('type'):'dxa'})
+            E.SubElement(cp,w('vAlign'),{w('val'):'center'})
+            p=E.SubElement(c,w('p'));pp=E.SubElement(p,w('pPr'))
+            E.SubElement(pp,w('spacing'),{w('before'):'20',w('after'):'20'})
+            E.SubElement(pp,w('jc'),{w('val'):'left' if len(widths)==3 and index==1 else 'center'})
+            r=E.SubElement(p,w('r'));pr=E.SubElement(r,w('rPr'))
+            E.SubElement(pr,w('rFonts'),{w('ascii'):'Arial',w('hAnsi'):'Arial'})
+            if i==0 or total:E.SubElement(pr,w('b'))
+            E.SubElement(pr,w('sz'),{w('val'):'18'})
+            E.SubElement(r,w('t')).text=''.join(ch for ch in str(value) if ord(ch)>=32 or ch in '\t\n')
+    return table
+
+
+def distribucion_mensual(rows):
+    months=[[Decimal(0) for _ in range(7)] for _ in range(12)]
+    dates={};ambiguous=set();undistributed=Decimal(0)
+    for item in rows:
+        length=(item['fin']-item['inicio']).days+1
+        known=item['dias']==length or length==1
+        if not known:undistributed+=item['dias']
+        day=item['inicio']
+        while day<=item['fin']:
+            dates.setdefault(day,Decimal(0))
+            if known:
+                amount=item['dias'] if length==1 else Decimal(1)
+                dates[day]+=amount;months[day.month-1][day.weekday()]+=amount
+            else:ambiguous.add(day)
+            day+=timedelta(days=1)
+    return dict(meses=months,fechas=dates,ambiguas=ambiguous,no_distribuido=undistributed,
+        total=sum((sum(m) for m in months),Decimal(0)))
+
+
+def resumen_mensual(body,data):
+    paragraph(body,'DÍAS POR MES Y DÍA DE LA SEMANA',True,20)
+    rows=[[MONTHS[i],*[num(v) for v in values],num(sum(values))] for i,values in enumerate(data['meses'])]
+    vertical=[sum((values[i] for values in data['meses']),Decimal(0)) for i in range(7)]
+    rows.append(['TOTAL ANUAL',*[num(v) for v in vertical],num(data['total'])])
+    body.append(tabla_datos(['MES','LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM','TOTAL MES'],rows,[1400]+[900]*7+[1200]))
+
+
+def observaciones_tabla(body,notes,titulo='OBSERVACIONES'):
+    paragraph(body,titulo,True,22)
+    rows=[]
+    for note in list(dict.fromkeys(notes)) or ['Sin incongruencias detectadas en los datos revisados.']:
+        dates=list(dict.fromkeys(re.findall(r'\d{2}/\d{2}/\d{4}',note)))
+        ids=[]
+        for match in re.finditer(r'[Rr]egistros? (\d+)(?: y (\d+))?',note):
+            ids.extend(x for x in match.groups() if x)
+        rows.append([' al '.join(dates[:2]) or '—',note,', '.join(dict.fromkeys(ids)) or '—'])
+    body.append(tabla_datos(['FECHAS','OBSERVACIÓN','REGISTROS'],rows,[1800,5900,1200]))
+
 def generar_docx(cuenta,anio,formato,con_observaciones=True):
     if formato not in {'record','informe'} or not 1900<=anio<=9999: raise ValueError('Formato o año inválido.')
     layout=json.loads((Path(__file__).parent/'vacaciones_word_layout.json').read_text(encoding='utf-8'))[formato]
     source=E.fromstring(layout['table']); templates=source.findall(w('tr'))
     for row in templates: source.remove(row)
     rows,warnings=movimientos_del_anio(cuenta,anio)
+    distribution=distribucion_mensual(rows)
+    if distribution['no_distribuido']:
+        warnings.append(f'Hay {num(distribution["no_distribuido"])} días declarados sin distribución mensual fiable: sus intervalos no coinciden con la cantidad. Las fechas marcadas con † se muestran como referencia, sin repartir esos días ni modificar el saldo.')
     root=E.Element(w('document')); body=E.SubElement(root,w('body'))
     paragraph(body,('RÉCORD' if formato=='record' else 'INFORME')+f' DE VACACIONES {anio}',True,26)
     paragraph(body,f'{cuenta.nombre} · DNI {cuenta.dni}')
+    paragraph(body,f'Régimen laboral: {getattr(cuenta,"regimen_laboral","") or "Sin régimen informado"}.',size=20)
     paragraph(body,f'Vacaciones vigentes del 01/01/{anio} al 31/12/{anio}.')
     saldo_documento(body,cuenta)
     if formato=='record':
@@ -174,26 +249,34 @@ def generar_docx(cuenta,anio,formato,con_observaciones=True):
             source.append(row_from(templates[4],['',item['inicio'].strftime('%d/%m/%Y'),item['fin'].strftime('%d/%m/%Y'),num(item['dias']),m.observaciones,m.periodo,'']))
         source.append(row_from(templates[5],['TOTAL UTILIZADO EN EL AÑO','','',num(sum((r['dias'] for r in rows),Decimal(0))),'','','']))
     else:
-        source.append(row_from(templates[0],['MES / VACACIONES','LUNES','MARTES','MIÉRCOLES','JUEVES','VIERNES','SÁBADO','DOMINGO'],True))
-        requested=set()
-        for item in rows:
-            day=item['inicio']
-            while day<=item['fin']:
-                requested.add(day); day+=timedelta(days=1)
+        calendar_rows=[]
         for month in range(1,13):
             first=True
             for week in Calendar(firstweekday=0).monthdayscalendar(anio,month):
-                if not any(d and date(anio,month,d) in requested for d in week): continue
-                source.append(row_from(templates[1],[MONTHS[month-1] if first else '',*[str(d) if d and date(anio,month,d) in requested else '' for d in week]]))
+                if not any(d and date(anio,month,d) in distribution['fechas'] for d in week):continue
+                cells=[]
+                for d in week:
+                    day=date(anio,month,d) if d else None
+                    if day not in distribution['fechas']:cells.append('');continue
+                    amount=distribution['fechas'][day]
+                    text=str(d)+(f' ({num(amount)})' if amount not in (0,1) else '')
+                    cells.append(text+('†' if day in distribution['ambiguas'] else ''))
+                calendar_rows.append([MONTHS[month-1] if first else '',*cells,''])
                 first=False
-    if formato=='informe': uniformar_informe(source)
+            if not first:
+                values=distribution['meses'][month-1]
+                calendar_rows.append([f'TOTAL {MONTHS[month-1]}',*[num(v) for v in values],num(sum(values))])
+        vertical=[sum((v[i] for v in distribution['meses']),Decimal(0)) for i in range(7)]
+        calendar_rows.append(['TOTAL ANUAL',*[num(v) for v in vertical],num(distribution['total'])])
+        source=tabla_datos(['MES / VACACIONES','LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM','TOTAL MES'],calendar_rows,[1400]+[900]*7+[1200])
     body.append(source)
     if not rows: paragraph(body,'Sin vacaciones vigentes con fechas y días registrados para este año.')
     if formato=='record': paragraph(body,'Programado y saldo: acumulados actuales de la ficha. Total utilizado: movimientos del año seleccionado.',size=18)
+    if formato=='record':resumen_mensual(body,distribution)
+    paragraph(body,f'Total distribuido en meses: {num(distribution["total"])} días. Declarados sin distribución fiable: {num(distribution["no_distribuido"])} días. Total declarado con fechas del año: {num(sum((r["dias"] for r in rows),Decimal(0)))} días.',size=18)
+    if formato=='informe':paragraph(body,'Las celdas muestran fechas; los subtotales suman días de consumo, no los números del calendario. Entre paréntesis se indica una cantidad distinta de un día.',size=18)
     if con_observaciones:
-        paragraph(body,'OBSERVACIONES',True)
-        for warning in list(dict.fromkeys(observaciones_control(cuenta)+warnings)) or ['Sin incongruencias detectadas en los datos revisados.']:
-            paragraph(body,warning,size=18)
+        observaciones_tabla(body,observaciones_control(cuenta)+warnings)
     body.append(E.fromstring(layout['section']))
     content_types='<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>'
     relns='http://schemas.openxmlformats.org/package/2006/relationships'
@@ -216,6 +299,9 @@ def generar_integrado(cuenta):
     warnings=observaciones_control(cuenta)
     for year in years:
         _,year_warnings=movimientos_del_anio(cuenta,year)
+        distribution=distribucion_mensual(movimientos_del_anio(cuenta,year)[0])
+        if distribution['no_distribuido']:
+            year_warnings.append(f'{num(distribution["no_distribuido"])} días declarados sin distribución mensual fiable; fechas marcadas con †. Se conserva el consumo original.')
         warnings.extend(f'{year}: {note}' for note in year_warnings)
         for kind in ('record','informe'):
             with ZipFile(BytesIO(generar_docx(cuenta,year,kind,con_observaciones=False))) as archive:
@@ -238,9 +324,7 @@ def generar_integrado(cuenta):
                 props.append(section)
                 body.extend(list(content))
             section=next_section
-    paragraph(body,'OBSERVACIONES GENERALES',True)
-    for note in list(dict.fromkeys(warnings)) or ['Sin incongruencias detectadas en los datos revisados.']:
-        paragraph(body,note,size=18)
+    observaciones_tabla(body,warnings,'OBSERVACIONES GENERALES')
     body.append(section)
     package['word/document.xml']=E.tostring(root,encoding='utf-8',xml_declaration=True)
     out=BytesIO()

@@ -43,7 +43,7 @@ class ControlVacacionesTests(TestCase):
         root=ET.fromstring(ZipFile(BytesIO(data)).read('word/document.xml'))
         table=root.find('.//'+w('tbl')); row=table.findall(w('tr'))[1]
         values=[''.join(c.itertext()) for c in row.findall(w('tc'))]
-        self.assertEqual(values,['ENERO','','','','1','2','3',''])
+        self.assertEqual(values,['ENERO','','','','1','2','3','',''])
         record=ZipFile(BytesIO(generar_docx(self.account,2026,'record'))).read('word/document.xml').decode()
         self.assertNotIn('ANULADO NO EXPORTAR',record)
         self.assertIn('01/01/2026',record); self.assertNotIn('29/12/2025',record)
@@ -75,9 +75,9 @@ class ControlVacacionesTests(TestCase):
         root=ET.fromstring(ZipFile(BytesIO(generar_docx(self.account,2026,'informe'))).read('word/document.xml'))
         rows=root.find('.//'+w('tbl')).findall(w('tr'))[1:]
         values=[[''.join(c.itertext()) for c in r.findall(w('tc'))] for r in rows]
-        self.assertEqual(values[0][-2:],['10','11'])
-        self.assertEqual(values[1][-2:],['17','18'])
-        self.assertEqual(sum(row.count('9') for row in values),1)
+        self.assertEqual(values[0][-3:-1],['10','11'])
+        self.assertEqual(values[1][-3:-1],['17','18'])
+        self.assertEqual(sum(sum(v.startswith('9 (') for v in row[1:8]) for row in values if not row[0].startswith('TOTAL')),1)
 
     def test_detalle_cronologico_por_fecha_con_sin_fecha_al_final(self):
         newer=MovimientoVacacion.objects.create(cuenta=self.account,codigo='05',dias=1,

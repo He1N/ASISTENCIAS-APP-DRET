@@ -34,7 +34,10 @@ class Command(BaseCommand):
         if not {'Resumen','detalle'}.issubset(wb.sheetnames):
             raise CommandError('Se requieren las hojas Resumen y detalle.')
         s,d=wb['Resumen'],wb['detalle']
-        summary=[r for r in range(4,s.max_row+1) if s.cell(r,1).value and s.cell(r,2).value]
+        nuevo=str(s.cell(4,1).value or '').lower()=='dni'
+        offset=3 if nuevo else 0
+        def valor(row,col): return s.cell(row,col+offset if col>=2 else col).value
+        summary=[r for r in range(5 if nuevo else 4,s.max_row+1) if valor(r,1) and valor(r,2)]
         detail=[r for r in range(3,d.max_row+1) if d.cell(r,1).value]
         ids=[str(s.cell(r,1).value) for r in summary]
         if len(ids)!=len(set(ids)): raise CommandError('Hay DNI duplicados en RESUMEN; no se importa.')
@@ -53,10 +56,19 @@ class Command(BaseCommand):
             accounts={}
             for r in summary:
                 dni=str(s.cell(r,1).value)
-                account=CuentaVacacion.objects.create(dni=dni,nombre=str(s.cell(r,2).value),
-                    tipo=str(s.cell(r,3).value or ''),estado=str(s.cell(r,4).value or ''),
-                    asignaciones={str(2022+i):str(s.cell(r,5+i).value) if s.cell(r,5+i).value is not None else None for i in range(9)},
+                account=CuentaVacacion.objects.create(dni=dni,nombre=str(valor(r,2)),
+                    tipo=str(valor(r,3) or ''),estado=str(valor(r,4) or ''),
+                    asignaciones={str(2022+i):str(valor(r,5+i)) if valor(r,5+i) is not None else None for i in range(9)},
                     origen={'checksum':checksum,'hoja':'Resumen','fila':r,'valores':raw(s,r)})
+                if nuevo:
+                    from control.regimenes import normalizar_regimen
+                    account.regimen_laboral=normalizar_regimen(s.cell(r,2).value)
+                    account.condicion_laboral=str(s.cell(r,3).value or '')
+                    end=s.cell(r,4).value
+                    account.fin_contrato=end.strftime('%d/%m/%Y') if isinstance(end,(date,datetime)) else str(end or '')
+                    original=account.origen['valores']
+                    account.origen['valores']={str(int(k)-3 if int(k)>=5 else 1):v for k,v in original.items() if int(k)==1 or int(k)>=5}
+                    account.save()
                 accounts[dni]=account
                 registrar(account,user,'importar',contexto={'hoja':'Resumen','fila':r})
             for r in detail:

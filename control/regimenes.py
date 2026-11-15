@@ -1,4 +1,4 @@
-"""Clasificación informativa; el régimen no concede ni modifica días."""
+"""Clasificación laboral y normalización de etiquetas."""
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone

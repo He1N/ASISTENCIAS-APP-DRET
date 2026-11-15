@@ -31,3 +31,18 @@ La generación no modifica datos, saldos, régimen laboral ni sincronización.
 La generación usa OOXML estándar y las tablas del modelo original, sin requerir
 Word instalado en producción. Las pruebas comprueban sumas mensuales, medias
 jornadas, saldos negativos, permisos, selección anual y ausencia de observaciones.
+
+
+Tipo de archivo: Word por defecto o PDF. La descarga PDF utiliza ReportLab
+a partir de los mismos cuadros y valores del Word, sin programas externos.
+Las opciones son Informe anual, Récord anual y Todos los años; este último
+reúne todos los años en un solo documento. Las muestras SVG de la pantalla
+son referencias ficticias.
+
+
+Actualización de Todos los años: un récord global con asignaciones, sustento
+por movimiento, subtotales anuales, TOTAL y SALDO. A continuación, informes
+con calendario y resumen mensual solo para años con consumo fechable. El
+diseño sigue forma correcta.docx. Movimientos sin fechas suficientes se
+conservan en el récord sin atribuir fechas. Los permisos 09 y Ley 276 no se
+incluyen en los cuadros ni en los totales de ningún formato.

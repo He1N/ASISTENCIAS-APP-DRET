@@ -362,3 +362,83 @@ Ampliación: incluir también las vacaciones de media jornada confirmadas como
 o legados 05 con 0,5, si falta Al se trata la fecha Del o Fecha registrada como
 fecha única de la media jornada, sin modificar el dato original ni descontar
 otra vez el consumo. No extrapolar esta regla a códigos desconocidos.
+
+## 22. Simplificación visual del control vacacional (14/11/2026)
+
+Quitar del resumen el bloque «Observaciones de enlace con Consultas» y de la
+ficha los párrafos «Observación de Consultas, registro …» con su contenido.
+Conservar los datos de enlace, sus ajustes y la sincronización. Sustituir el
+párrafo de saldo negativo debajo del resumen por un icono de advertencia junto
+a «Pendiente total», visible únicamente si el saldo es menor que cero.
+Los cambios se revisan primero en local; publicar en producción solo después
+de la revisión y autorización del responsable.
+
+## 23. Descarga PDF y ejemplos visuales (local)
+
+En Generar formato, ofrecer Tipo de archivo debajo de Formato: Word por
+defecto y PDF. Ambos anuales entrega un ZIP del tipo elegido; integrado
+conserva todos los años. El PDF usa los mismos cuadros y valores del Word.
+Mostrar ejemplos ficticios del récord con sustento y del informe calendario
+a la derecha en escritorio y debajo en pantallas pequeñas.
+
+Aclaración: Formato ofrece únicamente Informe anual, Récord anual y Todos los
+años. Retirar Ambos anuales y ZIP. La tercera entrada se llama Formato de
+archivo y permite Word (por defecto) o PDF.
+
+## 24. Notificaciones de vacaciones y logo (local)
+
+Campana junto al usuario con el número de cuentas vacacionales no eliminadas
+cuyo pendiente total es negativo. Desplegar nombre, pendiente total y enlace
+a la ficha. Calcular en cada petición con asignaciones y consumos vigentes,
+para retirar automáticamente las cuentas cuando su saldo alcance cero.
+Solo usuarios con permiso de consulta del control pueden ver estos avisos.
+Usar el PNG suministrado por el responsable como logo de la cabecera.
+
+## 25. Tema visual local
+
+Botón luna a la derecha de la campana en modo claro; al activarlo aplicar
+modo oscuro a toda la interfaz y mostrar sol para volver al modo claro.
+Guardar la elección en localStorage del navegador. Claro por defecto.
+Conservar legibles tablas, formularios, navegación y notificaciones; los
+formatos descargados conservan su presentación de impresión.
+
+## 26. Saldo separado Ley 276 y eliminación permanente (local)
+
+Solo DEC. LEG. 276 recibe 3 días de permiso por cada año con asignación
+vacacional positiva. Se acumulan separados de las vacaciones normales.
+Solo movimientos 09 vigentes consumen ese saldo: usar permiso_ley del Excel,
+o cantidad explícita en días si falta la primera. Sin cantidad no descontar
+ni inferir días por fechas. Los 09 nunca consumen vacaciones ordinarias.
+Mostrar Ley 276 junto a Pendiente 2025 solo para ese régimen.
+Permitir borrado físico de movimientos independientes con permiso delete,
+versión vigente, motivo y confirmación ELIMINAR. Conservar auditoría.
+No borrar movimientos enlazados unilateralmente ni fichas completas con esta
+acción; conservar el procedimiento de origen y las anulaciones existentes.
+
+## 27. Filtros de movimientos en la ficha (local, 15/11/2026)
+
+Debajo de los saldos, filtrar por uno o varios años de la columna Periodo y
+por un tipo de movimiento, o mostrar todos. Combinar ambos filtros.
+El resumen superior conserva los saldos completos; el pie de la tabla cuenta
+solo los registros y vacaciones descontadas de la selección. Conservar el
+orden cronológico, los permisos, el tema oscuro y los datos originales.
+
+## 28. Exportación con datos laborales (local)
+
+En Resumen del Excel del control, insertar B Régimen laboral, C Condición,
+D Fin de contrato; trasladar nombre a E y las columnas/formulas restantes.
+Agregar fila para rotular K3 RDR 3015-2025 sobre el año 2025 (K4).
+Importar solo clasificación laboral por DNI desde el nuevo Excel autorizado,
+con previsualización y auditoría. No reemplazar vacaciones ni asignaciones.
+Conservar BAJA/NO EXISTE como texto y fechas reales como fechas en la salida.
+
+## 29. Todos los años según forma correcta (local)
+
+Sustituir los récords repetidos del integrado por un único récord global,
+con asignaciones, movimientos y sustento, subtotal por año, TOTAL y SALDO.
+Después añadir informes por cada año con consumo fechable, en páginas nuevas,
+con calendario y tabla mensual. Seguir el diseño de forma correcta.docx.
+Excluir código 09 y días/saldo Ley 276 de todos los formatos y sus totales.
+Conservar medias jornadas, negativos y cantidades sin inventar fechas. Los
+movimientos sin fechas suficientes permanecen en el récord, no se inventan
+calendarios. No modificar la BD al generar Word o PDF.

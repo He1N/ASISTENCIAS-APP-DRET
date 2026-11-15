@@ -19,7 +19,7 @@ def num(x): return format(Decimal(str(x)).normalize(),'f').replace('.',',')
 def anios_disponibles(cuenta):
     years={int(y) for y,v in cuenta.asignaciones.items() if str(y).isdigit() and v is not None and 1900<=int(y)<=9999}
     for m in cuenta.movimientos.all():
-        if m.estado!='VIGENTE': continue
+        if m.estado!='VIGENTE' or m.codigo=='09': continue
         years.update(d.year for d in (m.fecha,m.inicio,m.fin) if d)
         if str(m.periodo).isdigit() and 1900<=int(m.periodo)<=9999: years.add(int(m.periodo))
         if m.inicio and m.fin and m.inicio<=m.fin:
@@ -244,37 +244,5 @@ def generar_docx(cuenta,anio,formato):
 
 
 def generar_integrado(cuenta):
-    years=anios_disponibles(cuenta)
-    if not years:
-        # Una ficha sin fechas ni asignaciones también debe poder documentarse.
-        from django.utils import timezone
-        years=[timezone.localdate().year]
-    package=None; root=None; body=None; section=None
-    for year in years:
-        for kind in ('record','informe'):
-            with ZipFile(BytesIO(generar_docx(cuenta,year,kind))) as archive:
-                parts={name:archive.read(name) for name in archive.namelist()}
-            doc=E.fromstring(parts['word/document.xml']); content=doc.find(w('body'))
-            next_section=content.find(w('sectPr')); content.remove(next_section)
-            if package is None:
-                package=parts; root=doc; body=content
-                paragraph_intro=E.Element(w('p'))
-                intro_run=E.SubElement(paragraph_intro,w('r'))
-                E.SubElement(intro_run,w('t')).text='RÉCORD E INFORME INTEGRADOS DE VACACIONES · TODOS LOS AÑOS'
-                body.insert(0,paragraph_intro)
-            else:
-                # Cada cuadro conserva orientación y márgenes de su modelo.
-                p=E.SubElement(body,w('p')); props=E.SubElement(p,w('pPr'))
-                break_type=section.find(w('type'))
-                if break_type is None:
-                    break_type=E.Element(w('type')); section.insert(0,break_type)
-                break_type.set(w('val'),'nextPage')
-                props.append(section)
-                body.extend(list(content))
-            section=next_section
-    body.append(section)
-    package['word/document.xml']=E.tostring(root,encoding='utf-8',xml_declaration=True)
-    out=BytesIO()
-    with ZipFile(out,'w',ZIP_DEFLATED) as archive:
-        for name,data in package.items(): archive.writestr(name,data)
-    return out.getvalue()
+    from .vacaciones_integrado import generar
+    return generar(cuenta)

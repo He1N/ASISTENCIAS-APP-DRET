@@ -88,3 +88,16 @@ ya no existe y abre ambas hojas desde A1. La descarga individual usa el nombre d
 trabajador, sanitizado para archivos Windows y con cabecera UTF-8 para conservar
 tildes. Las pruebas de regresión cubren esos casos. Las salidas individual, general,
 vacía y con datos solo en DETALLE pasaron el SDK Open XML de Microsoft sin errores.
+
+
+Ley 276: las cuentas DEC. LEG. 276 tienen un saldo separado de tres días por
+año con asignación vacacional positiva. Solo el código 09 vigente descuenta
+esos permisos, usando la cantidad de permiso_ley (o días explícitos si no
+existe la primera). No calcular cantidades por fechas incompletas ni restar
+el código 09 de vacaciones ordinarias.
+
+La papelera de un movimiento independiente permite anularlo o borrarlo
+permanentemente. El borrado requiere permiso delete_movimientovacacion,
+versión vigente, motivo y escribir ELIMINAR. La auditoría conserva autor,
+motivo y copia del registro eliminado. Los movimientos enlazados se gestionan
+desde Consultas y no se borran unilateralmente desde el control.

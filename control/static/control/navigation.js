@@ -27,3 +27,14 @@ document.querySelectorAll('[data-nav-group]').forEach(group => {
     }).catch(() => {});
   });
 });
+
+const notifications = document.querySelector('.vac-notifications');
+if (notifications) {
+  document.addEventListener('click', event => { if (!notifications.contains(event.target)) notifications.open = false; });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && notifications.open) {
+      notifications.open = false;
+      notifications.querySelector('summary').focus();
+    }
+  });
+}

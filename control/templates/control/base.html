@@ -1,15 +1,19 @@
 {% load static %}<!doctype html>
 <html lang="es-PE">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="icon" type="image/svg+xml" href="{% static 'control/brand.svg' %}">
+<link rel="icon" type="image/png" href="{% static 'control/logo-dret.png' %}">
 <title>{% block title %}{{ titulo|default:"Acceso" }}{% endblock %} · DRET</title>
 <link rel="stylesheet" href="{% static 'control/vendor/bootstrap-5.3.8.min.css' %}">
 <link rel="stylesheet" href="{% static 'control/vendor/bootstrap-table-1.27.3.min.css' %}">
 {% block vendor_css %}{% endblock %}
-<link rel="stylesheet" href="{% static 'control/app.css' %}"></head>
+<link rel="stylesheet" href="{% static 'control/app.css' %}">
+<link rel="stylesheet" href="{% static 'control/theme.css' %}">
+<script src="{% static 'control/theme.js' %}"></script></head>
 <body class="app-shell {% block body_class %}{% endblock %}"><a class="saltar" href="#contenido">Saltar al contenido</a>
-<header><a class="identidad marca-dret" href="{% url 'inicio' %}" aria-label="DRET · Inicio"><img src="{% static 'control/brand.svg' %}" alt="" width="36" height="36"><span class="marca-texto"><strong>DRET</strong><span>Control de Asistencias</span></span></a>
-{% if user.is_authenticated %}<div class="sesion"><span>{{ user.get_username }}</span><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="secundario" type="submit">Cerrar sesión</button></form></div>{% endif %}</header>
+<header><a class="identidad marca-dret" href="{% url 'inicio' %}" aria-label="DRET · Inicio"><img src="{% static 'control/logo-dret.png' %}" alt="" width="36" height="36"><span class="marca-texto"><strong>DRET</strong><span>Control de Asistencias</span></span></a>
+{% if user.is_authenticated %}<div class="sesion"><span>{{ user.get_username }}</span>
+{% if perms.control.view_cuentavacacion %}<details class="vac-notifications"><summary aria-label="Notificaciones: {{ notificaciones_vacaciones|length }}" title="Notificaciones de vacaciones"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4M12 2V1"/></svg><span class="vac-notification-count">{{ notificaciones_vacaciones|length }}</span></summary>
+<div class="vac-notification-panel"><h2>Notificaciones</h2><ul>{% for aviso in notificaciones_vacaciones %}<li><a href="{% url 'vacacion_ficha' aviso.cuenta.pk %}"><strong>{{ aviso.cuenta.nombre }}</strong><span>Pendiente total: <b>{{ aviso.pendiente|floatformat:'-2' }}</b> días</span></a></li>{% empty %}<li class="vac-notification-empty">No hay trabajadores con saldo negativo.</li>{% endfor %}</ul></div></details>{% endif %}<button type="button" class="theme-toggle" aria-label="Activar modo oscuro" title="Activar modo oscuro" aria-pressed="false"><svg class="theme-moon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 13a9 9 0 0 1-10-10 9 9 0 1 0 10 10Z"/></svg><svg class="theme-sun" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></button><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="secundario" type="submit">Cerrar sesión</button></form></div>{% endif %}</header>
 <div class="estructura {% if not user.is_authenticated %}acceso{% endif %}">
 {% if user.is_authenticated %}<aside><nav aria-label="Navegación principal">
 <details class="nav-menu" open><summary>Menú</summary><div class="enlaces">

@@ -1,0 +1,36 @@
+.theme-toggle { display:inline-flex; align-items:center; justify-content:center; background:transparent; color:#24364b; border:0; padding:.5rem; border-radius:5px; }
+.theme-toggle:hover { background:#edf2f7; }
+.theme-sun { display:none; }
+[data-theme=dark] .theme-sun { display:block; }
+[data-theme=dark] .theme-moon { display:none; }
+@media screen {
+  :root[data-theme=dark] { color-scheme:dark; --surface:#1b2635; --line:#3b4d61; --ink:#e4ecf5; --muted:#afc1d5; }
+  :root[data-theme=dark] body { background:#111a26; color:var(--ink); }
+  :root[data-theme=dark] .vacaciones-ui { --vac-ink:var(--ink); --vac-line:var(--line); }
+  :root[data-theme=dark] :is(header,aside,.vac-year-options,.vac-year-picker>summary,.ficha,.formulario,.filtros,.tabla,.vac-panel,.vac-search,.vac-summary-strip,.vac-notification-panel,.login-panel) { background:var(--surface); color:var(--ink); border-color:var(--line); }
+  :root[data-theme=dark] a { color:#91c9fa; }
+  :root[data-theme=dark] :is(h1,h2,h3,strong,.marca-dret,.vac-name a,.vac-total-footer strong,.dret-table td a) { color:var(--ink); }
+  :root[data-theme=dark] :is(.ayuda,.obligatorio,.conteo,.grupo,.login-entidad,.login-indicacion,.vac-eyebrow,.vac-person-meta,.vac-section-note,.vac-source,.vac-pagination,.paginacion,.vac-total-footer,.vac-allocations>summary,.vac-table-heading>span,.vac-summary-strip dt,.vac-summary-strip small,.marca-dret .marca-texto>span,.nav-group>summary,.nav-group a,.nav-group a small,.dret-table td small,.filtros label,.vac-search label,.filtro-exclusion .ayuda) { color:var(--muted); }
+  :root[data-theme=dark] :is(input:not([type=checkbox]):not([type=hidden]),select,textarea) { background:#111c2a; color:var(--ink); border-color:#5b7188; }
+  :root[data-theme=dark] input::placeholder { color:#9eafc2; opacity:1; }
+  :root[data-theme=dark] :is(th,.vacaciones-ui .vac-table th,.app-shell .dret-table th,.vacaciones-ui .vac-table th.vac-actions-cell) { background:#26374b; color:#d5e2ef; border-color:var(--line); }
+  :root[data-theme=dark] :is(td,.vacaciones-ui .vac-table td,.app-shell .dret-table td,.vacaciones-ui .vac-table .vac-actions-cell) { background:var(--surface); color:var(--ink); border-color:var(--line); box-shadow:none; }
+  :root[data-theme=dark] :is(.vacaciones-ui .vac-table,.app-shell .dret-table) { --bs-table-bg:var(--surface); --bs-table-color:var(--ink); --bs-table-hover-bg:#2a4058; --bs-table-hover-color:var(--ink); }
+  :root[data-theme=dark] :is(.vacaciones-ui .vac-table,.app-shell .dret-table) tr:nth-child(even) td { background:#202f41; }
+  :root[data-theme=dark] :is(.vacaciones-ui .vac-table,.app-shell .dret-table) tr:hover td { background:#2a4058; }
+  :root[data-theme=dark] :is(.secundario,.vac-icon,.vac-type,.filtro-exclusion,.vac-status,.theme-toggle) { background:#233449; color:#b9dcff; border-color:var(--line); }
+  :root[data-theme=dark] :is(.secundario:hover,.vac-icon:hover,.enlaces a:hover,.nav-group>summary:hover,.vac-notifications>summary:hover,.vac-notification-panel a:hover,.theme-toggle:hover) { background:#304762; color:var(--ink); }
+  :root[data-theme=dark] .nav-group a[aria-current] { background:#294866; color:#c6e5ff; border-color:#7abcf5; }
+  :root[data-theme=dark] :is(.vac-summary-strip>div,.vac-notification-panel h2,.vac-notification-panel li+li,.vac-total-footer,.vac-pagination,.vac-search,.ficha>div) { border-color:var(--line); }
+  :root[data-theme=dark] .vac-status-active { background:#24443b; color:#b1e3cd; }
+  :root[data-theme=dark] :is(.vac-icon-danger,.vac-notification-panel b,.errorlist) { color:#ffb1aa; }
+  :root[data-theme=dark] .vac-balance-warning { color:#ffd07c; }
+  :root[data-theme=dark] .vac-notification-count { border-color:var(--surface); }
+  :root[data-theme=dark] .nav-topic-icon { color:#a5c8e7; }
+  :root[data-theme=dark] .marca-dret img { background:#e4edf5; border-radius:5px; }
+  :root[data-theme=dark] .mensaje { background:#293d52; color:var(--ink); border-color:var(--line); }
+  :root[data-theme=dark] .resumen-error { background:#452b34; color:#ffc1ba; }
+  :root[data-theme=dark] .resumen-error a { color:#ffc1ba; }
+  :root[data-theme=dark] .con-error :is(input,select,textarea) { border-color:#f2a39b!important; }
+  :root[data-theme=dark] :focus-visible { outline:3px solid #ffce70; outline-offset:2px; }
+}

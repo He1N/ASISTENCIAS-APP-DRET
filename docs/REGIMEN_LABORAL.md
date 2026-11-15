@@ -42,3 +42,15 @@ La plantilla de impresión versionada contiene únicamente estilos y textos
 genéricos, generados con Artifact Tool. El servidor completa OOXML estándar
 con valores tipados y fórmulas SUM con resultados cacheados, sin añadir un
 runtime de hojas de cálculo ni nuevas dependencias al despliegue Django.
+
+
+Exportación general e individual del control: Resumen ahora tiene B Régimen
+laboral, C Condición y D Fin de contrato, con nombre en E. Los encabezados
+están en fila 4 y K3 identifica RDR 3015-2025 sobre K4 (2025). Las referencias
+de fórmulas se trasladan con las columnas. Las fechas de contrato se exportan
+como fechas; BAJA y NO EXISTE son textos.
+
+`python manage.py importar_datos_laborales archivo.xlsx` previsualiza la
+clasificación por DNI; agregar `--confirmar --usuario ADMIN` para importarla
+con auditoría. Solo cambia esos tres metadatos de las cuentas, nunca derechos
+ni movimientos. Es compatible con la referencia y con el Resumen exportado.

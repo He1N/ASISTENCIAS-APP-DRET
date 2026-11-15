@@ -12,7 +12,7 @@ class CuentaForm(EstiloForm):
         return normalizar_regimen(self.cleaned_data['regimen_laboral'])
     class Meta:
         model = CuentaVacacion
-        fields = ['dni','nombre','regimen_laboral','tipo','estado','habilitada','notas']
+        fields = ['dni','nombre','regimen_laboral','condicion_laboral','fin_contrato','tipo','estado','habilitada','notas']
 
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
@@ -37,6 +37,8 @@ class MovimientoForm(EstiloForm):
         self.fields['motivo'].required=True
         self.fields['dias'].min_value=0
         self.fields['permiso_ley'].min_value=0
+        self.fields['permiso_ley'].label='Días de permiso Ley 276 (código 09)'
+        self.fields['permiso_ley'].help_text='Se descuentan únicamente del saldo Ley 276. Si no hay cantidad registrada, no se descuenta.'
 
     def clean(self):
         d=super().clean()
@@ -46,7 +48,7 @@ class MovimientoForm(EstiloForm):
             self.add_error('dias','Los días no pueden ser negativos.')
         if d.get('permiso_ley') is not None and d['permiso_ley']<0:
             self.add_error('permiso_ley','El permiso no puede ser negativo.')
-        if d.get('estado')=='VIGENTE' and d.get('dias') is None:
+        if d.get('estado')=='VIGENTE' and d.get('codigo')!='09' and d.get('dias') is None:
             self.add_error('dias','Confirme los días antes de activar el movimiento.')
         # Un código desconocido nunca calcula días automáticamente. La persona
         # responsable puede confirmar una cantidad explícita con motivo auditado.

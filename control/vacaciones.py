@@ -7,13 +7,18 @@ def decimal(value):
     return Decimal(str(value or 0))
 
 
+def cantidad_ley(movimiento):
+    # El Excel separa días vacacionales y permiso de ley en dos columnas.
+    return movimiento.permiso_ley if movimiento.permiso_ley else movimiento.dias
+
+
 def detalle(cuenta):
     rows = []
     for m in cuenta.movimientos.all():
         rows.append(dict(pk=m.pk, periodo=m.periodo, codigo=m.codigo, fecha=m.fecha,
             inicio=m.inicio, fin=m.fin, dias=m.dias, permiso=m.permiso_ley,
             observaciones=m.observaciones, estado=m.estado, pendiente=m.pendiente_revision,
-            origen=m.origen, justificacion=None))
+            origen=m.origen, justificacion=None, dias_ley=cantidad_ley(m) if m.codigo=='09' else None))
     return sorted(rows, key=lambda r: (r['fecha'] or r['inicio'] or date.max,
                                       r['inicio'] or date.max, r['pk'] or 0))
 
@@ -21,7 +26,7 @@ def detalle(cuenta):
 def resumen(cuenta):
     rows = detalle(cuenta)
     total = sum((decimal(v) for v in cuenta.asignaciones.values() if v is not None), Decimal(0))
-    used = sum((decimal(r['dias']) for r in rows if r['estado']=='VIGENTE'), Decimal(0))
+    used = sum((decimal(r['dias']) for r in rows if r['estado']=='VIGENTE' and r['codigo']!='09'), Decimal(0))
     pending = total-used
     issues = []
     blockers = []
@@ -38,5 +43,13 @@ def resumen(cuenta):
         take = min(max(consumption, Decimal(0)), amount)
         remaining[year] = amount-take
         consumption -= take
-    return dict(cuenta=cuenta, programado=total, usado=used, pendiente=pending,
+    from .regimenes import normalizar_regimen
+    ley=None
+    if normalizar_regimen(cuenta.regimen_laboral)=='DEC. LEG. 276':
+        anios=[y for y,v in cuenta.asignaciones.items() if str(y).isdigit() and v is not None and decimal(v)>0]
+        asignado=Decimal(3)*len(anios)
+        permisos=[r for r in rows if r['codigo']=='09' and r['estado']=='VIGENTE']
+        usado=sum((decimal(r['dias_ley']) for r in permisos),Decimal(0))
+        ley=dict(programado=asignado,usado=usado,pendiente=asignado-usado,anios=anios)
+    return dict(ley_276=ley,cuenta=cuenta, programado=total, usado=used, pendiente=pending,
                 por_anio=remaining, incidencias=issues, bloqueos=blockers, filas=rows)

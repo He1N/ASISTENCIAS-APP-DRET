@@ -1,10 +1,15 @@
 {% extends 'control/vacaciones/base.html' %}
+{% load static %}
 {% block content %}<section class="vacaciones-ui">
 <a class="vac-back" href="{% url 'vacacion_ficha' cuenta.pk %}">← Volver al detalle</a>
 <h1>Generar formato</h1><p>{{ cuenta.nombre }} · DNI {{ cuenta.dni }}</p>
-<form method="get" class="formulario"><input type="hidden" name="generar" value="1">
+<div class="vac-format-layout"><form method="get" class="formulario"><input type="hidden" name="generar" value="1">
 {{ form.non_field_errors }}
 {% for field in form %}<div class="campo"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
 <p class="ayuda">Años con fechas registradas: {% for anio in anios %}{{ anio }}{% if not forloop.last %}, {% endif %}{% empty %}ninguno{% endfor %}. Puede escribir otro año.</p>
-<p>El Word integrado reúne el récord y el informe de todos los años registrados; no necesita elegir año. Los formatos anuales se limitan al año elegido. Incluyen saldo y una tabla sencilla de días por mes y total. No incluyen observaciones.</p>
-<button type="submit">Descargar Word</button></form></section>{% endblock %}
+<p>Todos los años reúne un único récord con subtotales por año y saldo, seguido de los informes anuales con consumo; no necesita elegir año. Los formatos anuales se limitan al año elegido. Incluyen saldo y una tabla sencilla de días por mes y total. El récord incluye el sustento de cada movimiento.</p>
+<button type="submit">Descargar</button></form>
+<aside class="vac-format-examples" aria-label="Ejemplos de formatos"><h2>Ejemplos de los cuadros</h2><p class="ayuda">Referencia con datos ficticios.</p>
+<figure><figcaption><strong>Récord anual</strong> · Fechas, días y sustento</figcaption><img src="{% static 'control/ejemplo-record.svg' %}" alt="Ejemplo de récord: tabla con Del, Al, días, periodo, sustento y total mensual"></figure>
+<figure><figcaption><strong>Informe anual</strong> · Calendario por mes</figcaption><img src="{% static 'control/ejemplo-informe.svg' %}" alt="Ejemplo de informe: calendario de lunes a domingo y suma de días por mes"></figure>
+</aside></div></section>{% endblock %}

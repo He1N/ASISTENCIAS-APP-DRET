@@ -209,6 +209,8 @@ class CuentaVacacion(Fechado):
     dni = models.CharField(max_length=20, unique=True)
     nombre = models.CharField(max_length=250)
     regimen_laboral = models.CharField('Régimen laboral', max_length=80, blank=True)
+    condicion_laboral = models.CharField('Condición laboral', max_length=100, blank=True)
+    fin_contrato = models.CharField('Fin de contrato', max_length=100, blank=True)
     tipo = models.CharField(max_length=40, blank=True)
     estado = models.CharField(max_length=40, blank=True)
     habilitada = models.BooleanField(default=True)

@@ -24,6 +24,105 @@ class ControlVacacionesTests(TestCase):
         self.account=CuentaVacacion.objects.create(trabajador=self.worker,dni='00000001',nombre='PERSONA FICTICIA',
             asignaciones={'2022':None,'2023':None,'2024':'10','2025':'30'})
 
+    def test_descargas_pdf_individual_integrado_y_zip(self):
+        self.client.force_login(self.user)
+        url=reverse('vacacion_formatos',args=[self.account.pk])
+        for kind in ('record','informe','integrado'):
+            response=self.client.get(url,dict(generar='1',anio=2026,formato=kind,tipo_archivo='pdf'))
+            self.assertEqual(response.status_code,200)
+            self.assertEqual(response['Content-Type'],'application/pdf')
+            self.assertTrue(response.content.startswith(b'%PDF-'))
+        self.assertContains(self.client.get(url),'Formato de archivo')
+        self.assertContains(self.client.get(url),'ejemplo-record.svg')
+        self.assertContains(self.client.get(url),'ejemplo-informe.svg')
+
+    def test_filtros_ficha_anios_multiples_tipo_y_saldo_completo(self):
+        self.client.force_login(self.user)
+        for anio,codigo,dias in [('2023','05',2),('2024','05',3),('2024','09',0),('2025','32',Decimal('.5'))]:
+            MovimientoVacacion.objects.create(cuenta=self.account,periodo=anio,codigo=codigo,dias=dias)
+        url=reverse('vacacion_ficha',args=[self.account.pk])
+        response=self.client.get(url,{'anio':['2023','2024'],'tipo_movimiento':'05'})
+        self.assertEqual(len(response.context['filas_visibles']),2)
+        self.assertEqual(response.context['total_visible'],5)
+        self.assertEqual(response.context['r']['usado'],Decimal('5.5'))
+        self.assertEqual(response.context['r']['pendiente'],Decimal('34.5'))
+        response=self.client.get(url,{'anio':'2025','tipo_movimiento':'05'})
+        self.assertEqual(response.context['filas_visibles'],[])
+        self.assertContains(response,'No hay movimientos para los filtros seleccionados.')
+        self.assertEqual(len(self.client.get(url).context['filas_visibles']),4)
+
+    def test_exportacion_columnas_laborales_y_referencias(self):
+        self.account.regimen_laboral='DEC. LEG. 276'
+        self.account.condicion_laboral='NOMBRADO';self.account.fin_contrato='31/12/2027';self.account.save()
+        MovimientoVacacion.objects.create(cuenta=self.account,codigo='05',dias=Decimal('0.5'))
+        data=exportar_control([resumen(self.account)])
+        book=load_workbook(BytesIO(data));sheet=book['Resumen']
+        self.assertEqual([sheet[f'{c}4'].value for c in 'ABCDE'],['Dni','Régimen laboral','Condición','Fin de contrato','Apellidos y Nombres'])
+        self.assertEqual(sheet['K3'].value,'RDR 3015-2025')
+        with ZipFile(BytesIO(data)) as archive:
+            root=ET.fromstring(archive.read('xl/worksheets/sheet1.xml'))
+            ns={'s':'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
+            rows=[int(row.get('r')) for row in root.find('s:sheetData',ns)]
+            self.assertEqual(rows,sorted(set(rows)))
+        self.assertTrue(sheet['K3'].font.bold)
+        self.assertEqual(sheet['K3'].fill.fgColor.rgb,'FFFFFF00')
+        self.assertEqual(sheet['K4'].value,2025)
+        self.assertEqual(sheet['C5'].value,'NOMBRADO')
+        self.assertEqual(sheet['D5'].value.date(),date(2027,12,31))
+        self.assertEqual(sheet['Q5'].value,'=SUM(H5:P5)')
+        self.assertIn('detalle!$G$',sheet['R5'].value)
+        self.assertEqual(sheet['S5'].value,'=Q5-R5')
+        self.assertEqual(sheet['D5'].number_format,'dd/mm/yyyy')
+        self.account.fin_contrato='BAJA'
+        sheet=load_workbook(BytesIO(exportar_control([resumen(self.account)])))['Resumen']
+        self.assertEqual(sheet['D5'].value,'BAJA')
+
+    def test_importar_datos_laborales_solo_metadatos_con_previa(self):
+        self.account.condicion_laboral='CONTRATADO';self.account.fin_contrato='BAJA';self.account.save()
+        data=exportar_control([resumen(self.account)])
+        self.account.condicion_laboral='';self.account.fin_contrato='';self.account.save()
+        asignaciones=self.account.asignaciones.copy()
+        with TemporaryDirectory() as tmp:
+            path=Path(tmp)/'fuente.xlsx';path.write_bytes(data)
+            call_command('importar_datos_laborales',str(path),stdout=StringIO())
+            self.account.refresh_from_db();self.assertEqual(self.account.condicion_laboral,'')
+            call_command('importar_datos_laborales',str(path),confirmar=True,usuario=self.user.username,stdout=StringIO())
+            self.account.refresh_from_db()
+            self.assertEqual(self.account.condicion_laboral,'CONTRATADO')
+            self.assertEqual(self.account.fin_contrato,'BAJA')
+            self.assertEqual(self.account.asignaciones,asignaciones)
+            self.assertEqual(MovimientoVacacion.objects.count(),0)
+            count=self.account.updated_at
+            call_command('importar_datos_laborales',str(path),confirmar=True,usuario=self.user.username,stdout=StringIO())
+            self.account.refresh_from_db();self.assertEqual(self.account.updated_at,count)
+
+    def test_integrado_record_unico_subtotales_y_exclusion_ley276(self):
+        from .vacaciones_word import generar_integrado,w,anios_disponibles
+        self.account.regimen_laboral='DEC. LEG. 276';self.account.save()
+        MovimientoVacacion.objects.create(cuenta=self.account,codigo='05',dias=3,inicio=date(2024,12,31),fin=date(2025,1,2),periodo='2024',observaciones='SUSTENTO NORMAL')
+        MovimientoVacacion.objects.create(cuenta=self.account,codigo='32',dias=Decimal('.5'),fecha=date(2025,2,1),observaciones='MEDIA JORNADA')
+        MovimientoVacacion.objects.create(cuenta=self.account,codigo='88',dias=2,periodo='2023',observaciones='SIN FECHAS')
+        MovimientoVacacion.objects.create(cuenta=self.account,codigo='09',dias=8,permiso_ley=99,fecha=date(2035,1,1),observaciones='LEY EXCLUIDA')
+        self.assertNotIn(2035,anios_disponibles(self.account))
+        data=generar_integrado(self.account)
+        root=ET.fromstring(ZipFile(BytesIO(data)).read('word/document.xml'))
+        paragraphs=[''.join(p.itertext()) for p in root.findall('./'+w('body')+'/'+w('p'))]
+        self.assertEqual(paragraphs.count('RÉCORD DE VACACIONES'),1)
+        self.assertIn('INFORME DE VACACIONES 2024',paragraphs)
+        self.assertIn('INFORME DE VACACIONES 2025',paragraphs)
+        self.assertNotIn('INFORME DE VACACIONES 2023',paragraphs)
+        tables=root.findall('./'+w('body')+'/'+w('tbl'))
+        values=[[''.join(c.itertext()) for c in row.findall(w('tc'))] for row in tables[1].findall(w('tr'))]
+        self.assertIn(['TOTAL DEL AÑO 2024','','1','',''],values)
+        self.assertIn(['TOTAL DEL AÑO 2025','','2,5','',''],values)
+        self.assertIn(['TOTAL','','5,5','Días',''],values)
+        self.assertIn(['SALDO','','34,5','Días',''],values)
+        text=ET.tostring(root,encoding='unicode')
+        self.assertNotIn('LEY EXCLUIDA',text)
+        self.assertNotIn('Ley 276',text)
+        self.assertIn('SIN FECHAS',text)
+        self.assertEqual(MovimientoVacacion.objects.count(),4)
+
     def test_fifo_y_medios_dias(self):
         MovimientoVacacion.objects.create(cuenta=self.account,codigo='32',dias=Decimal('10.5'))
         r=resumen(self.account)
@@ -54,7 +153,7 @@ class ControlVacacionesTests(TestCase):
         self.assertContains(self.client.get(url),'Año de las fechas Del/Al')
         response=self.client.get(url,{'generar':'1','anio':'2026','formato':'ambos'})
         self.assertEqual(response.status_code,200)
-        self.assertEqual(len(ZipFile(BytesIO(response.content)).namelist()),2)
+        self.assertIn('formato',response.context['form'].errors)
         self.assertContains(self.client.get(url,{'generar':'1','anio':'xx','formato':'record'}),'Introduzca')
         MovimientoVacacion.objects.create(cuenta=self.account,codigo='05',dias=2,
             inicio=date(2025,12,29),fin=date(2026,1,3))
@@ -122,12 +221,12 @@ class ControlVacacionesTests(TestCase):
         data=exportar_control([resumen(self.account)])
         wb=load_workbook(BytesIO(data),data_only=False)
         self.assertEqual(wb.sheetnames,['Resumen','detalle'])
-        self.assertEqual(wb['Resumen']['A4'].value,'00000001')
-        self.assertEqual(wb['Resumen']['B4'].data_type,'s')
-        self.assertIn('F2:M2',str(wb['Resumen'].merged_cells))
+        self.assertEqual(wb['Resumen']['A5'].value,'00000001')
+        self.assertEqual(wb['Resumen']['E5'].data_type,'s')
+        self.assertIn('I2:P2',str(wb['Resumen'].merged_cells))
         cached=load_workbook(BytesIO(data),data_only=True)
-        self.assertEqual(cached['Resumen']['O4'].value,.5)
-        self.assertEqual(cached['Resumen']['P4'].value,39.5)
+        self.assertEqual(cached['Resumen']['R5'].value,.5)
+        self.assertEqual(cached['Resumen']['S5'].value,39.5)
         self.assertEqual(cached['detalle']['E3'].value.date(),date(2026,1,2))
 
     def test_xml_compatible_y_hojas_visibles_desde_a1(self):
@@ -169,7 +268,7 @@ class ControlVacacionesTests(TestCase):
         response=self.client.get(reverse('vacacion_exportar'))
         self.assertEqual(response.status_code,200)
         wb=load_workbook(BytesIO(response.content),data_only=True)
-        self.assertEqual(wb['Resumen']['P4'].value,-10)
+        self.assertEqual(wb['Resumen']['S5'].value,-10)
 
     def test_eliminar_no_borra_historial_y_no_se_exporta(self):
         self.client.force_login(self.user)
@@ -190,7 +289,7 @@ class ControlVacacionesTests(TestCase):
             CuentaVacacion.objects.create(dni=f'{i+100:08}',nombre=f'OTRA PERSONA {i}')
         response=self.client.get(reverse('vacacion_exportar'),{'q':'OTRA PERSONA'})
         wb=load_workbook(BytesIO(response.content),data_only=True)
-        self.assertEqual(wb['Resumen'].max_row,29)
+        self.assertEqual(wb['Resumen'].max_row,30)
 
     def test_lista_sin_mensajes_de_revision_y_con_acciones(self):
         self.client.force_login(self.user)
@@ -243,8 +342,9 @@ class ControlVacacionesTests(TestCase):
             self.assertNotIn('Posible superposición',text)
             self.assertNotIn('sin Del/Al válidos',text)
             if kind=='integrado':
-                self.assertIn('RÉCORD DE VACACIONES 2027',text)
-                self.assertIn('INFORME DE VACACIONES 2028',text)
+                self.assertIn('RÉCORD DE VACACIONES',text)
+                self.assertNotIn('RÉCORD DE VACACIONES 2027',text)
+                self.assertNotIn('INFORME DE VACACIONES 2028',text)
                 self.assertNotIn('OBSERVACIONES GENERALES',text)
         self.client.force_login(self.user)
         url=reverse('vacacion_formatos',args=[self.account.pk])
@@ -261,9 +361,9 @@ class ControlVacacionesTests(TestCase):
                 MovimientoVacacion.objects.create(cuenta=self.account,codigo='88',dias=2,periodo='2023')
             data=generar_integrado(self.account)
             text=ZipFile(BytesIO(data)).read('word/document.xml').decode()
-            self.assertIn('Programado: 0 días',text)
+            self.assertIn('Programado',text)
             if with_movement:
-                self.assertIn('RÉCORD DE VACACIONES 2023',text)
+                self.assertIn('TOTAL DEL AÑO 2023',text)
                 self.assertIn('Exceso: 2 días',text)
 
     def test_formulario_cancela_y_audita(self):

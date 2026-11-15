@@ -30,7 +30,7 @@ def lista(request):
     page=Paginator(qs,25).get_page(request.GET.get('page'))
     rows=[resumen(c) for c in page]
     return render(request,'control/vacaciones/lista.html',dict(titulo='Control de vacaciones',tipo='control_vacaciones',
-        pagina=page,filas=rows,q=q,regimen_laboral=regime,regimenes=opciones_regimen(),enlaces_pendientes=EnlaceVacacion.objects.filter(estado__in=['PENDIENTE','EXCEPCION']).select_related('justificacion__trabajador','cuenta')))
+        pagina=page,filas=rows,q=q,regimen_laboral=regime,regimenes=opciones_regimen()))
 
 
 @never_cache
@@ -39,7 +39,23 @@ def lista(request):
 @require_safe
 def ficha(request,pk):
     c=get_object_or_404(CuentaVacacion,pk=pk,eliminada=False)
-    return render(request,'control/vacaciones/ficha.html',dict(titulo=c.nombre,tipo='control_vacaciones',r=resumen(c)))
+    r=resumen(c)
+    etiquetas={'05':'Vacaciones','32':'Media jornada','09':'Permiso Ley'}
+    anios=sorted({fila['periodo'] or '__sin__' for fila in r['filas']},reverse=True)
+    tipos=sorted({fila['codigo'] for fila in r['filas']})
+    seleccionados=request.GET.getlist('anio')
+    tipo_movimiento=request.GET.get('tipo_movimiento','')
+    visibles=[fila for fila in r['filas']
+              if (not seleccionados or (fila['periodo'] or '__sin__') in seleccionados)
+              and (not tipo_movimiento or fila['codigo']==tipo_movimiento)]
+    from decimal import Decimal
+    descontado=sum((fila['dias'] or Decimal(0) for fila in visibles
+                    if fila['estado']=='VIGENTE' and fila['codigo']!='09'),Decimal(0))
+    return render(request,'control/vacaciones/ficha.html',dict(titulo=c.nombre,tipo='control_vacaciones',r=r,
+        filas_visibles=visibles,total_visible=descontado,filtrado=bool(seleccionados or tipo_movimiento),
+        anios_movimientos=[(a,'Sin periodo' if a=='__sin__' else a) for a in anios],
+        anios_seleccionados=seleccionados,tipo_movimiento=tipo_movimiento,
+        tipos_movimientos=[(codigo,etiquetas.get(codigo,f'Código {codigo}')) for codigo in tipos]))
 
 
 @never_cache
@@ -50,12 +66,11 @@ def formatos(request,pk):
     from django import forms
     from django.utils import timezone
     from .vacaciones_word import generar_docx, generar_integrado, anios_disponibles
-    from io import BytesIO
-    from zipfile import ZipFile,ZIP_DEFLATED
     c=get_object_or_404(CuentaVacacion.objects.prefetch_related('movimientos'),pk=pk,eliminada=False)
     class Opciones(forms.Form):
         anio=forms.IntegerField(label='Año de las fechas Del/Al (solo formatos anuales)',required=False,min_value=1900,max_value=9999,initial=timezone.localdate().year)
-        formato=forms.ChoiceField(label='Formato',choices=[('integrado','Récord e informe integrados · todos los años (Word)'),('record','Récord anual'),('informe','Informe anual'),('ambos','Ambos anuales (archivo ZIP)')])
+        formato=forms.ChoiceField(label='Formato',choices=[('informe','Informe anual'),('record','Récord anual'),('integrado','Todos los años')])
+        tipo_archivo=forms.ChoiceField(label='Formato de archivo',choices=[('word','Word'),('pdf','PDF')],required=False,initial='word')
         def clean(self):
             data=super().clean()
             if data.get('formato')!='integrado' and not data.get('anio'):
@@ -66,18 +81,18 @@ def formatos(request,pk):
     if form.is_bound and form.is_valid():
         year=form.cleaned_data['anio']; choice=form.cleaned_data['formato']
         name=re.sub(r'[^\w .-]','',c.nombre).strip() or c.dni
+        from .vacaciones_pdf import convertir_docx
+        pdf=form.cleaned_data.get('tipo_archivo')=='pdf'
+        extension='pdf' if pdf else 'docx'
+        def contenido(data): return convertir_docx(data) if pdf else data
         try:
             if choice=='integrado':
-                data=generar_integrado(c); filename=f'Record_informe_{name}_todos_los_anios.docx'
+                data=contenido(generar_integrado(c)); filename=f'Record_informe_{name}_todos_los_anios.{extension}'
                 mime='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-            elif choice=='ambos':
-                out=BytesIO()
-                with ZipFile(out,'w',ZIP_DEFLATED) as z:
-                    for kind in ['record','informe']: z.writestr(f'{kind}_{name}_{year}.docx',generar_docx(c,year,kind))
-                data=out.getvalue(); filename=f'Formatos_{name}_{year}.zip'; mime='application/zip'
             else:
-                data=generar_docx(c,year,choice); filename=f'{choice}_{name}_{year}.docx'
+                data=contenido(generar_docx(c,year,choice)); filename=f'{choice}_{name}_{year}.{extension}'
                 mime='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            if pdf: mime='application/pdf'
             response=HttpResponse(data,content_type=mime)
             response['Content-Disposition']=content_disposition_header(True,filename)
             return response
@@ -178,6 +193,19 @@ def eliminar(request,pk,movimiento=None):
         if request.method=='POST':
             if request.POST.get('version')!=obj.updated_at.isoformat():
                 error='Los datos cambiaron. Recargue antes de eliminar.'
+            elif request.POST.get('accion')=='permanente':
+                if not movimiento or not request.user.has_perm('control.delete_movimientovacacion'):
+                    from django.core.exceptions import PermissionDenied
+                    raise PermissionDenied
+                if request.POST.get('confirmar')!='ELIMINAR' or not request.POST.get('motivo','').strip():
+                    error='Escriba ELIMINAR y un motivo para confirmar la eliminación permanente.'
+                else:
+                    before=snapshot(obj)
+                    registrar(obj,request.user,'eliminar_permanentemente',before,
+                              {'registro_eliminado':before,'motivo':request.POST['motivo'].strip()[:2000]})
+                    obj.delete()
+                    messages.success(request,'Movimiento eliminado permanentemente. La auditoría se conserva.')
+                    return redirect('vacacion_ficha',pk=pk)
             else:
                 before=snapshot(obj)
                 if movimiento:

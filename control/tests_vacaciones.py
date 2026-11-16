@@ -123,6 +123,16 @@ class ControlVacacionesTests(TestCase):
         self.assertIn('SIN FECHAS',text)
         self.assertEqual(MovimientoVacacion.objects.count(),4)
 
+    def test_lista_muestra_nombre_corregido_aunque_faltara_en_resumen(self):
+        self.client.force_login(self.user)
+        self.account.nombre='PERSONA CON NOMBRE CORREGIDO'
+        self.account.origen={'sin_resumen':True};self.account.habilitada=False;self.account.save()
+        response=self.client.get(reverse('vacacion_lista'),{'q':'00000001'})
+        self.assertContains(response,'PERSONA CON NOMBRE CORREGIDO')
+        self.assertNotContains(response,'Sin nombre en RESUMEN')
+        self.assertContains(response,'Inhabilitado')
+        self.assertContains(self.client.get(reverse('vacacion_ficha',args=[self.account.pk])),'PERSONA CON NOMBRE CORREGIDO')
+
     def test_fifo_y_medios_dias(self):
         MovimientoVacacion.objects.create(cuenta=self.account,codigo='32',dias=Decimal('10.5'))
         r=resumen(self.account)

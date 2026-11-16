@@ -570,8 +570,6 @@ dd {
 .vac-notification-panel b { color:#a33124; }
 .vac-notification-empty { padding:1rem; }
 
-.vac-summary-with-ley { grid-template-columns:repeat(6,minmax(0,1fr)); }
-@media(max-width:760px) { .vac-summary-with-ley { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 
 .vac-delete-panel { padding:1.25rem; margin:1rem 0; }
 .vac-delete-panel h2 { margin-top:0; }

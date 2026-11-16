@@ -469,3 +469,10 @@ Excluir inhabilitados de avisos de saldo negativo. Publicar local/Git/producció
 
 Orden del menú Vacaciones y licencias: Control de vacaciones, Registros de
 vacaciones, Licencias sindicales y LEY 276 al final, conservando permisos.
+
+## 32. Resumen de vacaciones y nombres del listado
+
+Retirar la tarjeta Ley 276 del resumen de Control de vacaciones; sus saldos
+se consultan en el apartado exclusivo. Conservar cálculos y registros.
+En el listado mostrar siempre el nombre actual de la ficha, aunque el origen
+tenga sin_resumen. La procedencia histórica no oculta nombres ya corregidos.

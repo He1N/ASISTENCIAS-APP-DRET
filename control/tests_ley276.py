@@ -22,7 +22,8 @@ class Ley276Tests(TestCase):
         self.assertEqual(r['usado'],30);self.assertEqual(r['pendiente'],60)
         self.assertEqual(r['ley_276']['programado'],9)
         self.assertEqual(r['ley_276']['pendiente'],6)
-        self.assertContains(self.client.get(reverse('vacacion_ficha',args=[self.c.pk])),'Ley 276')
+        self.assertNotContains(self.client.get(reverse('vacacion_ficha',args=[self.c.pk])),'<dt>Ley 276</dt>',html=True)
+        self.assertContains(self.client.get(reverse('ley276_ficha',args=[self.c.pk])),'Días totales asignados')
         self.c.regimen_laboral='CAS';self.c.save()
         self.assertIsNone(resumen(self.c)['ley_276'])
 
@@ -45,7 +46,7 @@ class Ley276Tests(TestCase):
             r=resumen(self.c)
             self.assertEqual(r['ley_276']['pendiente'],expected)
             self.assertEqual(r['programado'],90);self.assertEqual(r['usado'],0)
-        self.assertContains(self.client.get(reverse('vacacion_ficha',args=[self.c.pk])),'-2/0')
+        self.assertEqual(self.client.get(reverse('ley276_ficha',args=[self.c.pk])).context['r']['ley_276']['pendiente'],-2)
         self.assertEqual(HistorialCambio.objects.filter(objeto_id=self.c.pk,accion='editar').count(),2)
         response=self.client.post(url,payload(ley276_automatico='on',asignacion_ley276='0'))
         self.assertEqual(response.status_code,302);self.c.refresh_from_db()

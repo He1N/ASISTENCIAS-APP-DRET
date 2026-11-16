@@ -466,3 +466,6 @@ Seguir listando inhabilitados identificados. Todos los Excel del control y
 de Ley 276 excluyen fichas inhabilitadas; bloquear su descarga individual.
 No inhabilitar automáticamente por textos de contrato ni modificar asistencias.
 Excluir inhabilitados de avisos de saldo negativo. Publicar local/Git/producción.
+
+Orden del menú Vacaciones y licencias: Control de vacaciones, Registros de
+vacaciones, Licencias sindicales y LEY 276 al final, conservando permisos.

@@ -108,3 +108,14 @@ el total o mantener el cálculo automático de 3 días por año. Al editar el
 total se desmarca automático; marcar la casilla restaura la regla dinámica.
 Se permite cero manual y medias jornadas, sin mezclar el saldo vacacional.
 Los cambios requieren motivo, versión y quedan auditados.
+
+
+LEY 276 ofrece buscador y fichas individuales del régimen DEC. LEG. 276.
+Sus Excel general (respeta búsqueda) e individual tienen Resumen y detalle;
+solo incluyen fichas habilitadas y permisos 09. Anulados visibles sin consumo.
+
+En Control, el nombre abre la ficha y el switch sustituye al ojo. Verde con
+punto a la derecha indica habilitado; gris con punto a la izquierda indica
+inhabilitado. Cambiarlo requiere permiso, CSRF y versión vigente; se audita
+y conserva movimientos. Los inhabilitados siguen visibles para reactivarlos,
+pero se excluyen de todos los Excel del control y Ley 276, y de los avisos.

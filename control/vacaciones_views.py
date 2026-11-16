@@ -154,6 +154,7 @@ def editar(request,pk=None,movimiento=None,nuevo=False):
 def exportar(request,pk=None):
     from .vacaciones_xlsx import exportar_control
     qs=CuentaVacacion.objects.filter(eliminada=False).prefetch_related('movimientos')
+    qs=qs.filter(habilitada=True)
     qs=qs.filter(pk=pk) if pk else qs
     q=request.GET.get('q','').strip()[:250]
     if q and not pk: qs=qs.filter(Q(nombre__icontains=q)|Q(dni__contains=q))
@@ -219,3 +220,24 @@ def eliminar(request,pk,movimiento=None):
                 return redirect('vacacion_ficha',pk=pk) if movimiento else redirect('vacacion_lista')
     return render(request,'control/vacaciones/eliminar.html',dict(titulo='Eliminar registro',tipo='control_vacaciones',
         objeto=obj,cuenta=cuenta,movimiento=movimiento,error=error,version=obj.updated_at.isoformat()))
+
+
+@never_cache
+@login_required
+@permission_required('control.change_cuentavacacion',raise_exception=True)
+@require_http_methods(['POST'])
+def habilitacion(request,pk):
+    with transaction.atomic():
+        cuenta=get_object_or_404(CuentaVacacion.objects.select_for_update(),pk=pk,eliminada=False)
+        if request.POST.get('version')!=cuenta.updated_at.isoformat():
+            return HttpResponse('La ficha cambió. Recargue antes de cambiar su habilitación.',status=409)
+        value=request.POST.get('habilitada')
+        if value not in ('0','1'):return HttpResponse('Habilitación inválida.',status=400)
+        enabled=value=='1'
+        if cuenta.habilitada!=enabled:
+            before=snapshot(cuenta);cuenta.habilitada=enabled;cuenta.save(update_fields=['habilitada','updated_at'])
+            registrar(cuenta,request.user,'habilitar' if enabled else 'inhabilitar',before)
+        url=reverse('vacacion_lista')
+        from urllib.parse import urlencode
+        filters={key:request.POST.get(key,'') for key in ('q','regimen_laboral','page')}
+        return redirect(url+'?'+urlencode(filters))

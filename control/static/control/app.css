@@ -585,3 +585,14 @@ dd {
 .vac-year-options { position:absolute; z-index:30; top:100%; left:0; width:100%; background:white; border:1px solid #7b8898; border-radius:3px; padding:.6rem; max-height:260px; overflow-y:auto; box-shadow:0 4px 10px #0002; }
 .vac-year-options label { display:flex; gap:.6rem; align-items:center; padding:.4rem; cursor:pointer; }
 @media(max-width:760px) { .vac-movement-filters>div { flex-basis:100%; } }
+
+.ley-summary { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.vac-switch-form { display:inline-flex; margin:0; }
+.vac-worker-switch { position:relative; display:inline-flex; align-items:center; width:38px; height:23px; padding:2px; border:1px solid #607186; border-radius:20px; background:#66778a; }
+.vac-worker-switch span { display:block; width:17px; height:17px; background:white; border-radius:50%; }
+.vac-worker-switch.is-on { background:#246d55; border-color:#246d55; }
+.vac-worker-switch.is-on span { transform:translateX(14px); }
+.vac-worker-switch:hover { outline:2px solid #9ab7d2; background:#4d6077; }
+.vac-worker-switch.is-on:hover { background:#1b5944; }
+.vac-worker-disabled .vac-name a { font-weight:400; }
+@media(max-width:760px) { .ley-summary { grid-template-columns:1fr; } }

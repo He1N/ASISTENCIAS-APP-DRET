@@ -193,7 +193,8 @@ class ControlVacacionesTests(TestCase):
         listing=self.client.get(reverse('vacacion_lista'))
         self.assertContains(listing,'Pendiente 2024')
         self.assertContains(listing,'Pendiente 2025')
-        self.assertContains(listing,'Ver detalle de PERSONA FICTICIA')
+        self.assertContains(listing,reverse('vacacion_ficha',args=[self.account.pk]))
+        self.assertContains(listing,'role="switch"')
         response=self.client.get(reverse('vacacion_ficha',args=[self.account.pk]))
         r=response.context['r']
         self.assertEqual(r['por_anio']['2024'],0)

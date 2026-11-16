@@ -45,3 +45,12 @@ urlpatterns += [
     path('importar/<int:pk>/', excel_views.importacion_revisar, name='importacion_revisar'),
     path('importar/<int:pk>/resumen/', excel_views.importacion_resumen, name='importacion_resumen'),
 ]
+
+from . import ley276_views
+urlpatterns += [
+    path('ley-276/',ley276_views.lista,name='ley276_lista'),
+    path('ley-276/exportar/',ley276_views.exportar,name='ley276_exportar'),
+    path('ley-276/<int:pk>/',ley276_views.ficha,name='ley276_ficha'),
+    path('ley-276/<int:pk>/exportar/',ley276_views.exportar,name='ley276_exportar_individual'),
+    path('control-vacaciones/<int:pk>/habilitacion/',vacaciones_control.habilitacion,name='vacacion_habilitacion'),
+]

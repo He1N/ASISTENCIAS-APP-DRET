@@ -452,3 +452,17 @@ positiva. Guardar null para modo automático y cantidad para modo manual;
 permitir volver al automático. Auditar cambios con motivo y versión vigente.
 No mezclar Ley 276 con vacaciones ordinarias ni incluirla en los formatos.
 Aplicar en local y producción por autorización del responsable.
+
+## 31. LEY 276 y habilitación del control
+
+Agregar LEY 276 al menú Vacaciones y licencias. Listar únicamente cuentas
+DEC. LEG. 276, con buscador por nombre/DNI y totales, usados y restantes.
+Detalle individual con registros 09; Excel general o individual con Resumen
+y detalle, respetando búsqueda y permisos. Reutilizar cálculo automático y
+manual existente. Mostrar estados y descontar solo registros vigentes.
+Sustituir ojo en Control por switch habilitado/inhabilitado. POST con CSRF,
+permiso de cambio, versión y auditoría; conservar historial y permitir reactivar.
+Seguir listando inhabilitados identificados. Todos los Excel del control y
+de Ley 276 excluyen fichas inhabilitadas; bloquear su descarga individual.
+No inhabilitar automáticamente por textos de contrato ni modificar asistencias.
+Excluir inhabilitados de avisos de saldo negativo. Publicar local/Git/producción.

@@ -8,7 +8,7 @@ def notificaciones_vacaciones(request):
     if not getattr(request,'user',None) or not request.user.is_authenticated or not request.user.has_perm('control.view_cuentavacacion'):
         return {}
     avisos=[]
-    cuentas=CuentaVacacion.objects.filter(eliminada=False).annotate(
+    cuentas=CuentaVacacion.objects.filter(eliminada=False,habilitada=True).annotate(
         consumo_notificacion=Sum('movimientos__dias',filter=Q(movimientos__estado='VIGENTE') & ~Q(movimientos__codigo='09'))
     ).order_by('nombre','pk')
     for cuenta in cuentas:

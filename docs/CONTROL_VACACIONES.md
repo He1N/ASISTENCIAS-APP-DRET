@@ -101,3 +101,10 @@ permanentemente. El borrado requiere permiso delete_movimientovacacion,
 versión vigente, motivo y escribir ELIMINAR. La auditoría conserva autor,
 motivo y copia del registro eliminado. Los movimientos enlazados se gestionan
 desde Consultas y no se borran unilateralmente desde el control.
+
+
+Ley 276 se presenta como disponibles/asignados. Editar ficha permite modificar
+el total o mantener el cálculo automático de 3 días por año. Al editar el
+total se desmarca automático; marcar la casilla restaura la regla dinámica.
+Se permite cero manual y medias jornadas, sin mezclar el saldo vacacional.
+Los cambios requieren motivo, versión y quedan auditados.

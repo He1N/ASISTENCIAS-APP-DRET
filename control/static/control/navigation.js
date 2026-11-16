@@ -38,3 +38,14 @@ if (notifications) {
     }
   });
 }
+
+const leyAuto = document.querySelector('#id_ley276_automatico');
+const leyTotal = document.querySelector('#id_asignacion_ley276');
+if (leyAuto && leyTotal) {
+  const autoTotal = () => [...document.querySelectorAll('[id^="id_anio_"]')].filter(field => Number(field.value) > 0).length * 3;
+  leyTotal.addEventListener('input', () => { leyAuto.checked = false; });
+  leyAuto.addEventListener('change', () => { if (leyAuto.checked) leyTotal.value = autoTotal(); });
+  document.querySelectorAll('[id^="id_anio_"]').forEach(field => field.addEventListener('input', () => {
+    if (leyAuto.checked) leyTotal.value = autoTotal();
+  }));
+}

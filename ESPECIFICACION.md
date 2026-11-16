@@ -442,3 +442,13 @@ Excluir código 09 y días/saldo Ley 276 de todos los formatos y sus totales.
 Conservar medias jornadas, negativos y cantidades sin inventar fechas. Los
 movimientos sin fechas suficientes permanecen en el récord, no se inventan
 calendarios. No modificar la BD al generar Word o PDF.
+
+## 30. Total editable de Ley 276
+
+Mostrar saldo disponible/total asignado, por ejemplo 6/12 días. Permitir
+indicar un total manual no negativo, incluso cero, en Editar ficha. Por
+defecto conservar cálculo automático de tres días por año con asignación
+positiva. Guardar null para modo automático y cantidad para modo manual;
+permitir volver al automático. Auditar cambios con motivo y versión vigente.
+No mezclar Ley 276 con vacaciones ordinarias ni incluirla en los formatos.
+Aplicar en local y producción por autorización del responsable.

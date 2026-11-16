@@ -1,3 +1,4 @@
+from django.core.validators import MinValueValidator
 import unicodedata
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -209,6 +210,7 @@ class CuentaVacacion(Fechado):
     dni = models.CharField(max_length=20, unique=True)
     nombre = models.CharField(max_length=250)
     regimen_laboral = models.CharField('Régimen laboral', max_length=80, blank=True)
+    asignacion_ley276 = models.DecimalField('Total de días asignados Ley 276', max_digits=9, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
     condicion_laboral = models.CharField('Condición laboral', max_length=100, blank=True)
     fin_contrato = models.CharField('Fin de contrato', max_length=100, blank=True)
     tipo = models.CharField(max_length=40, blank=True)

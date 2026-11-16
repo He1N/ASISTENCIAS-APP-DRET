@@ -23,6 +23,10 @@ def detalle(cuenta):
                                       r['inicio'] or date.max, r['pk'] or 0))
 
 
+def asignacion_ley276_automatica(cuenta):
+    return Decimal(3)*sum(str(y).isdigit() and v is not None and decimal(v)>0 for y,v in cuenta.asignaciones.items())
+
+
 def resumen(cuenta):
     rows = detalle(cuenta)
     total = sum((decimal(v) for v in cuenta.asignaciones.values() if v is not None), Decimal(0))
@@ -47,7 +51,8 @@ def resumen(cuenta):
     ley=None
     if normalizar_regimen(cuenta.regimen_laboral)=='DEC. LEG. 276':
         anios=[y for y,v in cuenta.asignaciones.items() if str(y).isdigit() and v is not None and decimal(v)>0]
-        asignado=Decimal(3)*len(anios)
+        manual=getattr(cuenta,'asignacion_ley276',None)
+        asignado=asignacion_ley276_automatica(cuenta) if manual is None else decimal(manual)
         permisos=[r for r in rows if r['codigo']=='09' and r['estado']=='VIGENTE']
         usado=sum((decimal(r['dias_ley']) for r in permisos),Decimal(0))
         ley=dict(programado=asignado,usado=usado,pendiente=asignado-usado,anios=anios)

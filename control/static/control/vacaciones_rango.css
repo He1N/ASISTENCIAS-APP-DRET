@@ -1,0 +1,12 @@
+.vac-rango { border: 1px solid currentColor; border-radius: .5rem; min-width: 0; padding: .75rem; }
+.vac-rango legend { font-weight: 600; padding: 0 .3rem; }
+.vac-rango-fechas { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: .75rem; }
+.vac-calendario { margin-top: .75rem; max-width: 26rem; }
+.vac-calendario summary { cursor: pointer; }
+.vac-calendario-mes { display: flex; align-items: center; justify-content: space-between; margin: .75rem 0; }
+.vac-calendario-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .2rem; text-align: center; }
+.vac-calendario-grid button.secundario { padding: .45rem .1rem; min-width: 0; }
+.vac-calendario-grid button[aria-pressed="true"] { background: #d6ebfc; color: #173b58; border-color: #4584af; }
+.vac-calendario-grid button[data-extremo] { background: #205d89; color: #fff; }
+.vac-rango { margin-bottom: 1.3rem; }
+.vac-rango-fechas .campo { margin-bottom: 0; }

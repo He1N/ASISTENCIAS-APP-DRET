@@ -46,6 +46,36 @@ class CuentaForm(EstiloForm):
         return data
 
 
+class AltaMovimientoForm(EstiloForm):
+    periodo = forms.ChoiceField(choices=[('', 'Seleccione un periodo')] +
+                                [(str(year), str(year)) for year in range(2024, 2027)])
+
+    class Meta:
+        model = MovimientoVacacion
+        fields = ['cuenta', 'periodo', 'fecha', 'inicio', 'fin', 'dias', 'observaciones']
+        labels = {'fecha': 'Fecha del CUD del documento', 'dias': 'Días'}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['cuenta'].queryset = CuentaVacacion.objects.filter(eliminada=False)
+        self.fields['inicio'].required = True
+        self.fields['fin'].required = True
+        self.fields['dias'].min_value = Decimal('0')
+        self.fields['dias'].help_text = 'Se calcula por fechas. Puede ajustarlo, por ejemplo a 0,5 para media jornada.'
+        self.instance.codigo = '05'
+        self.instance.estado = 'VIGENTE'
+
+    def clean(self):
+        data = super().clean()
+        inicio, fin = data.get('inicio'), data.get('fin')
+        if inicio and fin:
+            if fin < inicio:
+                self.add_error('fin', 'La fecha final es anterior al inicio.')
+            elif data.get('dias') is None and 'dias' not in self.errors:
+                data['dias'] = Decimal((fin - inicio).days + 1)
+        return data
+
+
 class MovimientoForm(EstiloForm):
     version = forms.CharField(widget=forms.HiddenInput, required=False)
     class Meta:

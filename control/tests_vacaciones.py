@@ -314,10 +314,12 @@ class ControlVacacionesTests(TestCase):
     def test_formulario_permite_crear_y_agravar_saldo_negativo_con_auditoria(self):
         self.client.force_login(self.user)
         response=self.client.post(reverse('vacacion_movimiento_nuevo',args=[self.account.pk]),
-            {'cuenta':self.account.pk,'codigo':'05','dias':'41','permiso_ley':'0','estado':'VIGENTE','motivo':'Prueba'})
+            {'cuenta':self.account.pk,'periodo':'2026','inicio':'2026-11-19','fin':'2026-11-19','dias':'41',
+             'codigo':'09','permiso_ley':'3','estado':'ANULADO','motivo':'No corresponde al alta'})
         self.assertEqual(response.status_code,302)
         self.assertEqual(resumen(self.account)['pendiente'],Decimal('-1'))
         m=MovimientoVacacion.objects.get()
+        self.assertEqual((m.codigo, m.estado, m.permiso_ley, m.motivo), ('05', 'VIGENTE', Decimal(0), ''))
         response=self.client.post(reverse('vacacion_movimiento_editar',args=[self.account.pk,m.pk]),
             {'cuenta':self.account.pk,'codigo':'05','dias':'45.5','permiso_ley':'0','estado':'VIGENTE',
              'motivo':'Exceso confirmado','version':m.updated_at.isoformat()})
@@ -325,6 +327,23 @@ class ControlVacacionesTests(TestCase):
         self.assertEqual(resumen(self.account)['pendiente'],Decimal('-5.5'))
         from .models import HistorialCambio
         self.assertEqual(HistorialCambio.objects.filter(entidad='movimientovacacion').count(),2)
+
+    def test_alta_calcula_dias_inclusivos_y_valida_periodo_y_rango(self):
+        self.client.force_login(self.user)
+        url = reverse('vacacion_movimiento_nuevo', args=[self.account.pk])
+        response = self.client.get(url)
+        self.assertContains(response, 'Fecha del CUD del documento')
+        self.assertEqual(list(response.context['form'].fields),
+                         ['cuenta', 'periodo', 'fecha', 'inicio', 'fin', 'dias', 'observaciones'])
+        data = {'cuenta': self.account.pk, 'periodo': '2026',
+                'inicio': '2026-11-19', 'fin': '2026-11-19', 'dias': ''}
+        self.assertEqual(self.client.post(url, {**data, 'fin': '2026-11-18'}).status_code, 200)
+        self.assertEqual(self.client.post(url, {**data, 'periodo': '2027'}).status_code, 200)
+        self.assertFalse(MovimientoVacacion.objects.exists())
+        self.assertEqual(self.client.post(url, data).status_code, 302)
+        self.assertEqual(MovimientoVacacion.objects.get().dias, Decimal(1))
+        self.assertEqual(self.client.post(url, {**data, 'dias': '0.5'}).status_code, 302)
+        self.assertTrue(MovimientoVacacion.objects.filter(dias=Decimal('0.5')).exists())
 
     def test_saldo_y_observaciones_en_ambos_formatos_e_integrado(self):
         from .vacaciones_word import generar_docx,generar_integrado,anios_disponibles

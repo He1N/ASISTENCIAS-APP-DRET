@@ -13,7 +13,7 @@ from django.views.decorators.http import require_http_methods, require_safe
 from .models import CuentaVacacion, MovimientoVacacion, EnlaceVacacion
 from .audit import registrar, snapshot
 from .vacaciones import resumen
-from .vacaciones_forms import CuentaForm, MovimientoForm
+from .vacaciones_forms import AltaMovimientoForm, CuentaForm, MovimientoForm
 
 
 @never_cache
@@ -120,7 +120,7 @@ def editar(request,pk=None,movimiento=None,nuevo=False):
             if enlace:
                 return render(request,'control/vacaciones/movimiento_enlazado.html',dict(enlace=enlace,cuenta=c,tipo='control_vacaciones'))
         before=snapshot(obj) if obj.pk else None
-        Form=MovimientoForm if isinstance(obj,MovimientoVacacion) else CuentaForm
+        Form = AltaMovimientoForm if nuevo else MovimientoForm if movimiento else CuentaForm
         form=Form(request.POST or None,instance=obj)
         if request.method=='POST' and form.is_valid():
             if obj.pk and form.cleaned_data['version'] != obj.updated_at.isoformat():
@@ -142,8 +142,11 @@ def editar(request,pk=None,movimiento=None,nuevo=False):
                 if saldo<0:
                     messages.warning(request,f'Saldo negativo: {saldo} días. El consumo excede las asignaciones registradas en {-saldo} días.')
                 return redirect('vacacion_ficha',pk=affected.pk)
-    return render(request,'control/formulario.html',dict(form=form,encabezado='Editar control de vacaciones',
-        titulo='Control de vacaciones',tipo='control_vacaciones',url_cancelar=reverse('vacacion_ficha',args=[pk]) if pk else reverse('vacacion_lista')))
+    template = 'control/vacaciones/movimiento_nuevo.html' if nuevo else 'control/formulario.html'
+    encabezado = 'Agregar movimiento' if nuevo else 'Editar control de vacaciones'
+    return render(request, template, dict(form=form, encabezado=encabezado,
+        titulo='Control de vacaciones', tipo='control_vacaciones',
+        url_cancelar=reverse('vacacion_ficha', args=[pk]) if pk else reverse('vacacion_lista')))
 
 
 @never_cache

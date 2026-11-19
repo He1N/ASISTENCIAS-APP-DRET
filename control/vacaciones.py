@@ -12,6 +12,18 @@ def cantidad_ley(movimiento):
     return movimiento.permiso_ley if movimiento.permiso_ley else movimiento.dias
 
 
+def saldo_ley276_anual(cuenta, anio):
+    asignado = Decimal(3)
+    usado = Decimal(0)
+    for movimiento in cuenta.movimientos.all():
+        if movimiento.codigo != '09' or movimiento.estado != 'VIGENTE':
+            continue
+        fecha = movimiento.inicio or movimiento.fecha or movimiento.fin
+        if (fecha and fecha.year == anio) or (not fecha and movimiento.periodo.strip() == str(anio)):
+            usado += decimal(cantidad_ley(movimiento))
+    return dict(programado=asignado, usado=usado, pendiente=asignado-usado)
+
+
 def detalle(cuenta):
     rows = []
     for m in cuenta.movimientos.all():

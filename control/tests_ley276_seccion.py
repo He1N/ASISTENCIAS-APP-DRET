@@ -1,6 +1,7 @@
 from datetime import date
 from decimal import Decimal
 from io import BytesIO
+from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.test import TestCase,Client
@@ -30,6 +31,30 @@ class Ley276SeccionTests(TestCase):
         self.assertNotContains(response,'SOLO VACACIONES')
         self.assertEqual(response.context['r']['ley_276']['usado'],Decimal('1.5'))
         self.assertEqual(self.client.get(reverse('ley276_ficha',args=[self.other.pk])).status_code,404)
+
+    def test_listado_ley276_usa_anio_vigente_y_muestra_exceso(self):
+        self.c.asignacion_ley276 = Decimal(12)
+        self.c.save(update_fields=['asignacion_ley276'])
+        for datos in [
+            dict(fecha=date(2025, 12, 31), permiso_ley=5),
+            dict(fecha=date(2025, 12, 31), inicio=date(2026, 1, 1), periodo='2025', permiso_ley=2),
+            dict(periodo='2026', dias=Decimal('0.5')),
+            dict(fecha=date(2026, 12, 31), permiso_ley=4, estado='CANCELADO'),
+            dict(fecha=date(2027, 1, 2), permiso_ley=1),
+        ]:
+            MovimientoVacacion.objects.create(cuenta=self.c, codigo='09', **datos)
+        url = reverse('ley276_lista')
+        for fecha, esperado in [
+            (date(2026, 12, 31), (3, 4, -1)),
+            (date(2027, 1, 1), (3, 1, 2)),
+            (date(2028, 1, 1), (3, 0, 3)),
+        ]:
+            with self.subTest(fecha=fecha), patch('control.ley276_views.timezone.localdate', return_value=fecha):
+                respuesta = self.client.get(url, {'q': self.c.dni})
+                self.assertContains(respuesta, f'DEC. LEG. 276 · {fecha.year}')
+                saldo = respuesta.context['filas'][0]['ley_276']
+                self.assertEqual((saldo['programado'], saldo['usado'], saldo['pendiente']), esperado)
+                self.assertContains(respuesta, f'>{esperado[2]}</td>')
 
     def test_excel_general_individual_filtrado_e_inactivos(self):
         for route,args in [('ley276_exportar',[]),('ley276_exportar_individual',[self.c.pk])]:

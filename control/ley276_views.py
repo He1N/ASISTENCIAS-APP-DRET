@@ -7,10 +7,11 @@ from django.db.models import Q
 from django.core.paginator import Paginator
 from django.shortcuts import render,get_object_or_404
 from django.http import HttpResponse
+from django.utils import timezone
 from django.utils.http import content_disposition_header
 from .models import CuentaVacacion
 from .regimenes import normalizar_regimen
-from .vacaciones import resumen
+from .vacaciones import resumen, saldo_ley276_anual
 from .exportacion_regimen import libro_agrupado
 
 
@@ -38,7 +39,10 @@ def obtener(pk,exportacion=False):
 def lista(request):
     q=request.GET.get('q','').strip()[:250]
     page=Paginator(cuentas(q),25).get_page(request.GET.get('page'))
-    return render(request,'control/ley276/lista.html',dict(titulo='LEY 276',tipo='ley276',q=q,pagina=page,filas=[resumen(c) for c in page]))
+    anio = timezone.localdate().year
+    filas = [dict(cuenta=c, ley_276=saldo_ley276_anual(c, anio)) for c in page]
+    return render(request, 'control/ley276/lista.html', dict(
+        titulo='LEY 276', tipo='ley276', q=q, pagina=page, filas=filas, anio=anio))
 
 
 @never_cache

@@ -62,6 +62,7 @@ class AltaMovimientoForm(EstiloForm):
         self.fields['fin'].required = True
         self.fields['dias'].min_value = Decimal('0')
         self.fields['dias'].help_text = 'Se calcula por fechas. Puede ajustarlo, por ejemplo a 0,5 para media jornada.'
+        self.initial['cud'] = ''
         self.instance.codigo = '05'
         self.instance.estado = 'VIGENTE'
 

@@ -353,6 +353,8 @@ class ControlVacacionesTests(TestCase):
         url = reverse('vacacion_movimiento_nuevo', args=[self.account.pk])
         response = self.client.get(url)
         self.assertContains(response, 'Fecha del CUD del documento')
+        self.assertEqual(response.context['form']['cud'].value(), '')
+        self.assertNotContains(response, 'DatabaseDefault')
         self.assertEqual(list(response.context['form'].fields),
                          ['cuenta', 'periodo', 'fecha', 'cud', 'inicio', 'fin', 'dias', 'observaciones'])
         data = {'cuenta': self.account.pk, 'periodo': '2026',
@@ -365,8 +367,8 @@ class ControlVacacionesTests(TestCase):
         self.assertEqual(movimiento.dias, Decimal(1))
         self.assertEqual(movimiento.cud, '00123')
         self.assertContains(self.client.get(reverse('vacacion_ficha', args=[self.account.pk])), 'CUD 00123')
-        self.assertEqual(self.client.post(url, {**data, 'dias': '0.5'}).status_code, 302)
-        self.assertTrue(MovimientoVacacion.objects.filter(dias=Decimal('0.5')).exists())
+        self.assertEqual(self.client.post(url, {**data, 'dias': '0.5', 'cud': ''}).status_code, 302)
+        self.assertTrue(MovimientoVacacion.objects.filter(dias=Decimal('0.5'), cud='').exists())
 
     def test_saldo_y_observaciones_en_ambos_formatos_e_integrado(self):
         from .vacaciones_word import generar_docx,generar_integrado,anios_disponibles

@@ -233,6 +233,7 @@ class MovimientoVacacion(Fechado):
     periodo = models.CharField(max_length=40, blank=True)
     codigo = models.CharField(max_length=40)
     fecha = models.DateField(null=True, blank=True)
+    cud = models.CharField('CUD', max_length=100, blank=True, db_default='')
     inicio = models.DateField(null=True, blank=True)
     fin = models.DateField(null=True, blank=True)
     dias = models.DecimalField(max_digits=9, decimal_places=2, null=True, blank=True)

@@ -74,6 +74,20 @@ class Ley276SeccionTests(TestCase):
         self.assertEqual(book['Resumen'].max_row,6)
         self.assertNotIn('00000003',[book['Resumen'].cell(r,1).value for r in range(5,7)])
 
+    def test_permiso_09_solo_se_exporta_desde_ley276(self):
+        for route, params in [('vacacion_exportar', {}),
+                              ('vacacion_exportar', {'agrupar_regimen': '1'}),
+                              ('vacacion_exportar_individual', {})]:
+            with self.subTest(route=route, params=params):
+                args = [self.c.pk] if route.endswith('individual') else []
+                response = self.client.get(reverse(route, args=args), params)
+                self.assertEqual(response.status_code, 200)
+                book = load_workbook(BytesIO(response.content), data_only=True)
+                self.assertFalse(any(cell.value == 'SUSTENTO LEY' for sheet in book
+                                     for row in sheet for cell in row))
+                self.assertTrue(any(cell.value == 'SOLO VACACIONES' for sheet in book
+                                    for row in sheet for cell in row))
+
     def test_switch_permiso_csrf_version_auditoria_y_reactivacion(self):
         url=reverse('vacacion_habilitacion',args=[self.c.pk])
         self.assertEqual(self.client.get(url).status_code,405)

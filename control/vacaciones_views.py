@@ -40,19 +40,20 @@ def lista(request):
 def ficha(request,pk):
     c=get_object_or_404(CuentaVacacion,pk=pk,eliminada=False)
     r=resumen(c)
-    etiquetas={'05':'Vacaciones','32':'Media jornada','09':'Permiso Ley'}
-    anios=sorted({fila['periodo'] or '__sin__' for fila in r['filas']},reverse=True)
-    tipos=sorted({fila['codigo'] for fila in r['filas']})
+    movimientos = [fila for fila in r['filas'] if fila['codigo'] != '09']
+    etiquetas={'05':'Vacaciones','32':'Media jornada'}
+    anios=sorted({fila['periodo'] or '__sin__' for fila in movimientos},reverse=True)
+    tipos=sorted({fila['codigo'] for fila in movimientos})
     seleccionados=request.GET.getlist('anio')
     tipo_movimiento=request.GET.get('tipo_movimiento','')
-    visibles=[fila for fila in r['filas']
+    visibles=[fila for fila in movimientos
               if (not seleccionados or (fila['periodo'] or '__sin__') in seleccionados)
               and (not tipo_movimiento or fila['codigo']==tipo_movimiento)]
     from decimal import Decimal
     descontado=sum((fila['dias'] or Decimal(0) for fila in visibles
-                    if fila['estado']=='VIGENTE' and fila['codigo']!='09'),Decimal(0))
+                    if fila['estado']=='VIGENTE'),Decimal(0))
     return render(request,'control/vacaciones/ficha.html',dict(titulo=c.nombre,tipo='control_vacaciones',r=r,
-        filas_visibles=visibles,total_visible=descontado,filtrado=bool(seleccionados or tipo_movimiento),
+        filas_visibles=visibles,total_movimientos=len(movimientos),total_visible=descontado,filtrado=bool(seleccionados or tipo_movimiento),
         anios_movimientos=[(a,'Sin periodo' if a=='__sin__' else a) for a in anios],
         anios_seleccionados=seleccionados,tipo_movimiento=tipo_movimiento,
         tipos_movimientos=[(codigo,etiquetas.get(codigo,f'Código {codigo}')) for codigo in tipos]))

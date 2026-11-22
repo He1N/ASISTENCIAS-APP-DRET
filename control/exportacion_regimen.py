@@ -108,8 +108,8 @@ def exportar_vacaciones_agrupadas(results):
             headers=['DNI','Trabajador','Régimen laboral','Programado','Usado','Saldo','Pendiente 2024','Pendiente 2025'],
             widths=[12,42,22,14,12,12,17,17],totales=[4,5,6,7,8],
             rows=[[r['cuenta'].dni,r['cuenta'].nombre,regime,r['programado'],r['usado'],r['pendiente'],r['por_anio'].get('2024',0),r['por_anio'].get('2025',0)] for r in ordered]))
-        movements=[[r['cuenta'].dni,r['cuenta'].nombre,m['periodo'],m['codigo'],m['inicio'],m['fin'],0 if m['codigo']=='09' else m['dias'],m['observaciones']]
-            for r in ordered for m in r['filas'] if m['estado']=='VIGENTE']
+        movements=[[r['cuenta'].dni,r['cuenta'].nombre,m['periodo'],m['codigo'],m['inicio'],m['fin'],m['dias'],m['observaciones']]
+            for r in ordered for m in r['filas'] if m['estado']=='VIGENTE' and m['codigo']!='09']
         sheets.append(dict(nombre='Detalle '+regime,titulo='MOVIMIENTOS DE VACACIONES',regimen=regime,
             headers=['DNI','Trabajador','Periodo','Código','Del','Al','Días','Observaciones'],
             widths=[12,35,10,9,13,13,9,52],totales=[7],rows=movements))

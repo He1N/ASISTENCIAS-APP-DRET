@@ -52,7 +52,7 @@ class AltaMovimientoForm(EstiloForm):
 
     class Meta:
         model = MovimientoVacacion
-        fields = ['cuenta', 'periodo', 'fecha', 'inicio', 'fin', 'dias', 'observaciones']
+        fields = ['cuenta', 'periodo', 'fecha', 'cud', 'inicio', 'fin', 'dias', 'observaciones']
         labels = {'fecha': 'Fecha del CUD del documento', 'dias': 'Días'}
 
     def __init__(self, *args, **kwargs):
@@ -80,7 +80,7 @@ class MovimientoForm(EstiloForm):
     version = forms.CharField(widget=forms.HiddenInput, required=False)
     class Meta:
         model = MovimientoVacacion
-        fields = ['cuenta','periodo','codigo','fecha','inicio','fin','dias','permiso_ley','observaciones',
+        fields = ['cuenta','periodo','codigo','fecha','cud','inicio','fin','dias','permiso_ley','observaciones',
                   'estado','motivo']
 
     def __init__(self,*args,**kwargs):
@@ -95,6 +95,8 @@ class MovimientoForm(EstiloForm):
 
     def clean(self):
         d=super().clean()
+        if self.instance.pk and self.add_prefix('cud') not in self.data:
+            d['cud'] = self.instance.cud
         if d.get('fin') and d.get('inicio') and d['fin']<d['inicio']:
             self.add_error('fin','La fecha final es anterior al inicio.')
         if d.get('dias') is not None and d['dias']<0:

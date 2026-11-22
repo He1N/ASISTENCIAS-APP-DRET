@@ -27,7 +27,7 @@ def saldo_ley276_anual(cuenta, anio):
 def detalle(cuenta):
     rows = []
     for m in cuenta.movimientos.all():
-        rows.append(dict(pk=m.pk, periodo=m.periodo, codigo=m.codigo, fecha=m.fecha,
+        rows.append(dict(pk=m.pk, periodo=m.periodo, codigo=m.codigo, fecha=m.fecha, cud=m.cud,
             inicio=m.inicio, fin=m.fin, dias=m.dias, permiso=m.permiso_ley,
             observaciones=m.observaciones, estado=m.estado, pendiente=m.pendiente_revision,
             origen=m.origen, justificacion=None, dias_ley=cantidad_ley(m) if m.codigo=='09' else None))

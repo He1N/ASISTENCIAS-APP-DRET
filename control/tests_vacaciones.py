@@ -39,7 +39,7 @@ class ControlVacacionesTests(TestCase):
 
     def test_filtros_ficha_anios_multiples_tipo_y_saldo_completo(self):
         self.client.force_login(self.user)
-        for anio,codigo,dias in [('2023','05',2),('2024','05',3),('2024','09',0),('2025','32',Decimal('.5'))]:
+        for anio,codigo,dias in [('2023','05',2),('2024','05',3),('2022','09',0),('2025','32',Decimal('.5'))]:
             MovimientoVacacion.objects.create(cuenta=self.account,periodo=anio,codigo=codigo,dias=dias)
         url=reverse('vacacion_ficha',args=[self.account.pk])
         response=self.client.get(url,{'anio':['2023','2024'],'tipo_movimiento':'05'})
@@ -50,7 +50,12 @@ class ControlVacacionesTests(TestCase):
         response=self.client.get(url,{'anio':'2025','tipo_movimiento':'05'})
         self.assertEqual(response.context['filas_visibles'],[])
         self.assertContains(response,'No hay movimientos para los filtros seleccionados.')
-        self.assertEqual(len(self.client.get(url).context['filas_visibles']),4)
+        response = self.client.get(url)
+        self.assertEqual(len(response.context['filas_visibles']), 3)
+        self.assertNotIn(('2022', '2022'), response.context['anios_movimientos'])
+        self.assertNotIn(('09', 'Permiso Ley'), response.context['tipos_movimientos'])
+        self.assertNotContains(response, 'Permiso Ley')
+        self.assertEqual(self.client.get(url, {'tipo_movimiento': '09'}).context['filas_visibles'], [])
 
     def test_exportacion_columnas_laborales_y_referencias(self):
         self.account.regimen_laboral='DEC. LEG. 276'
@@ -349,14 +354,17 @@ class ControlVacacionesTests(TestCase):
         response = self.client.get(url)
         self.assertContains(response, 'Fecha del CUD del documento')
         self.assertEqual(list(response.context['form'].fields),
-                         ['cuenta', 'periodo', 'fecha', 'inicio', 'fin', 'dias', 'observaciones'])
+                         ['cuenta', 'periodo', 'fecha', 'cud', 'inicio', 'fin', 'dias', 'observaciones'])
         data = {'cuenta': self.account.pk, 'periodo': '2026',
-                'inicio': '2026-11-19', 'fin': '2026-11-19', 'dias': ''}
+                'inicio': '2026-11-19', 'fin': '2026-11-19', 'dias': '', 'cud': '00123'}
         self.assertEqual(self.client.post(url, {**data, 'fin': '2026-11-18'}).status_code, 200)
         self.assertEqual(self.client.post(url, {**data, 'periodo': '2027'}).status_code, 200)
         self.assertFalse(MovimientoVacacion.objects.exists())
         self.assertEqual(self.client.post(url, data).status_code, 302)
-        self.assertEqual(MovimientoVacacion.objects.get().dias, Decimal(1))
+        movimiento = MovimientoVacacion.objects.get()
+        self.assertEqual(movimiento.dias, Decimal(1))
+        self.assertEqual(movimiento.cud, '00123')
+        self.assertContains(self.client.get(reverse('vacacion_ficha', args=[self.account.pk])), 'CUD 00123')
         self.assertEqual(self.client.post(url, {**data, 'dias': '0.5'}).status_code, 302)
         self.assertTrue(MovimientoVacacion.objects.filter(dias=Decimal('0.5')).exists())
 

@@ -68,7 +68,7 @@ def cell(row,col,value,style=None,formula=None):
 def exportar_control(results):
     layout=json.loads((Path(__file__).parent/'vacaciones_layout.json').read_text(encoding='utf-8'))
     package=layout['package'].copy()
-    allrows=[(r,m) for r in results for m in r['filas'] if m['estado']=='VIGENTE']
+    allrows=[(r,m) for r in results for m in r['filas'] if m['estado']=='VIGENTE' and m['codigo']!='09']
     # Los DNI que solo estaban en DETALLE no generan filas inventadas en RESUMEN.
     summary=[r for r in results if not r['cuenta'].origen.get('sin_resumen')]
     for name,header,records in [('Resumen',3,summary),('detalle',2,allrows)]:
@@ -112,7 +112,7 @@ def exportar_control(results):
                 m=record[1]; raw=m['origen'].get('valores',{})
                 values={int(k):v for k,v in raw.items() if int(k)>15}
                 values.update({1:c.dni,2:m['periodo'],3:m['codigo'],4:m['fecha'],5:m['inicio'],6:m['fin'],
-                    7:0 if m['codigo']=='09' else m['dias'],8:m['dias_ley'] if m['codigo']=='09' else m['permiso'],9:m['observaciones'],10:c.nombre,11:m['inicio'],12:m['fin'],
+                    7:m['dias'],8:m['permiso'],9:m['observaciones'],10:c.nombre,11:m['inicio'],12:m['fin'],
                     13:str(m['fecha'].year) if m['fecha'] else None,
                     14:f'{m["fecha"].month:02}' if m['fecha'] else None,
                     15:f'{m["fecha"].day:02}' if m['fecha'] else None})

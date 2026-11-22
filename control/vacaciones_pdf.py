@@ -13,6 +13,10 @@ from .vacaciones_word import w
 def convertir_docx(data):
     with ZipFile(BytesIO(data)) as archive:
         body=E.fromstring(archive.read('word/document.xml')).find(w('body'))
+        footer_text = ''
+        if 'word/footer1.xml' in archive.namelist():
+            footer = E.fromstring(archive.read('word/footer1.xml'))
+            footer_text = ''.join(node.text or '' for node in footer.iter(w('t')))
     output=BytesIO()
     doc=SimpleDocTemplate(output,pagesize=A4,leftMargin=36,rightMargin=36,topMargin=36,bottomMargin=36)
     normal=ParagraphStyle('normal',fontName='Helvetica',fontSize=9,leading=12,spaceAfter=7)
@@ -59,5 +63,12 @@ def convertir_docx(data):
             table=Table(rows,colWidths=widths,repeatRows=1,hAlign='LEFT')
             table.setStyle(TableStyle([('GRID',(0,0),(-1,-1),.4,colors.HexColor('#a8b3c2')),('VALIGN',(0,0),(-1,-1),'MIDDLE'),('LEFTPADDING',(0,0),(-1,-1),4),('RIGHTPADDING',(0,0),(-1,-1),4),('TOPPADDING',(0,0),(-1,-1),5),('BOTTOMPADDING',(0,0),(-1,-1),5),*spans,*backgrounds]))
             story.extend([table,Spacer(1,10)])
-    doc.build(story)
+    def draw_footer(canvas, document):
+        if footer_text:
+            canvas.saveState()
+            canvas.setFont('Helvetica', 8)
+            canvas.drawString(document.leftMargin, 17, footer_text)
+            canvas.restoreState()
+
+    doc.build(story, onFirstPage=draw_footer, onLaterPages=draw_footer)
     return output.getvalue()

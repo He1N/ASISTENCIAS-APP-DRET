@@ -1,9 +1,10 @@
-from datetime import date
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from io import BytesIO, StringIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from zipfile import ZipFile
+from unittest.mock import patch
 from xml.etree import ElementTree as ET
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -104,14 +105,28 @@ class ControlVacacionesTests(TestCase):
         MovimientoVacacion.objects.create(cuenta=self.account,codigo='88',dias=2,periodo='2023',observaciones='SIN FECHAS')
         MovimientoVacacion.objects.create(cuenta=self.account,codigo='09',dias=8,permiso_ley=99,fecha=date(2035,1,1),observaciones='LEY EXCLUIDA')
         self.assertNotIn(2035,anios_disponibles(self.account))
-        data=generar_integrado(self.account)
-        root=ET.fromstring(ZipFile(BytesIO(data)).read('word/document.xml'))
+        with patch('django.utils.timezone.now', return_value=datetime(2026, 11, 22, 2, 3, 4, tzinfo=timezone.utc)):
+            data=generar_integrado(self.account)
+        with ZipFile(BytesIO(data)) as archive:
+            root=ET.fromstring(archive.read('word/document.xml'))
+            footer=ET.fromstring(archive.read('word/footer1.xml'))
+            self.assertEqual(''.join(footer.itertext()), 'Generado el 21/11/2026 a las 21:03:04 (hora de Perú)')
+            self.assertIn(b'Target="footer1.xml"', archive.read('word/_rels/document.xml.rels'))
+            self.assertIn(b'/word/footer1.xml', archive.read('[Content_Types].xml'))
+        for section in root.iter(w('sectPr')):
+            self.assertIsNotNone(section.find(w('footerReference')))
         paragraphs=[''.join(p.itertext()) for p in root.findall('./'+w('body')+'/'+w('p'))]
         self.assertEqual(paragraphs.count('RÉCORD DE VACACIONES'),1)
         self.assertIn('INFORME DE VACACIONES 2024',paragraphs)
         self.assertIn('INFORME DE VACACIONES 2025',paragraphs)
         self.assertNotIn('INFORME DE VACACIONES 2023',paragraphs)
         tables=root.findall('./'+w('body')+'/'+w('tbl'))
+        allocation=tables[0].findall(w('tr'))
+        self.assertEqual(len(tables[0].find(w('tblGrid'))), 8)
+        self.assertEqual([''.join(cell.itertext()) for cell in allocation[1].findall(w('tc'))[-3:]],
+                         ['Total', 'Usado', 'Saldo'])
+        self.assertEqual([''.join(cell.itertext()) for cell in allocation[2].findall(w('tc'))[-3:]],
+                         ['40', '5,5', '34,5'])
         values=[[''.join(c.itertext()) for c in row.findall(w('tc'))] for row in tables[1].findall(w('tr'))]
         self.assertIn(['TOTAL DEL AÑO 2024','','1','',''],values)
         self.assertIn(['TOTAL DEL AÑO 2025','','2,5','',''],values)

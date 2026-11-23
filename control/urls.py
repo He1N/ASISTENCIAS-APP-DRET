@@ -22,6 +22,7 @@ urlpatterns += [
 ]
 
 from . import excel_views, reportes
+from . import vacaciones_evidencia
 from . import vacaciones_views as vacaciones_control
 urlpatterns += [
     path('control-vacaciones/', vacaciones_control.lista, name='vacacion_lista'),
@@ -32,6 +33,8 @@ urlpatterns += [
     path('control-vacaciones/<int:pk>/formatos/', vacaciones_control.formatos, name='vacacion_formatos'),
     path('control-vacaciones/<int:pk>/editar/', vacaciones_control.editar, name='vacacion_editar'),
     path('control-vacaciones/<int:pk>/eliminar/', vacaciones_control.eliminar, name='vacacion_eliminar'),
+    path('control-vacaciones/<int:pk>/movimiento/<int:movimiento>/evidencia/subir/', vacaciones_evidencia.subir, name='vacacion_evidencia_subir'),
+    path('control-vacaciones/<int:pk>/movimiento/<int:movimiento>/evidencia/', vacaciones_evidencia.ver, name='vacacion_evidencia_ver'),
     path('control-vacaciones/<int:pk>/movimiento/<int:movimiento>/eliminar/', vacaciones_control.eliminar, name='vacacion_movimiento_eliminar'),
     path('control-vacaciones/<int:pk>/nuevo/', vacaciones_control.editar, {'nuevo':True}, name='vacacion_movimiento_nuevo'),
     path('control-vacaciones/<int:pk>/movimiento/<int:movimiento>/', vacaciones_control.editar, name='vacacion_movimiento_editar'),

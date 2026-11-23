@@ -1,0 +1,14 @@
+{% extends 'control/base.html' %}
+{% block content %}
+<a href="{% url 'vacacion_ficha' registro.cuenta_id %}">Volver a la ficha</a>
+<h1>Subir evidencia</h1>
+<p>{{ registro.cuenta.nombre }} · {{ registro.inicio|date:'d/m/Y' }}{% if registro.fin %} al {{ registro.fin|date:'d/m/Y' }}{% endif %}</p>
+<form method="post" enctype="multipart/form-data" class="formulario">
+  {% csrf_token %}
+  <div class="campo">{{ form.archivo.as_field_group }}</div>
+  <div class="acciones">
+    <button type="submit">Subir documento</button>
+    <a href="{% url 'vacacion_ficha' registro.cuenta_id %}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

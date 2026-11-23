@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods, require_safe
-from .models import CuentaVacacion, MovimientoVacacion, EnlaceVacacion
+from .models import CuentaVacacion, MovimientoVacacion, EnlaceVacacion, EvidenciaVacacion
 from .audit import registrar, snapshot
 from .memorandum import descargar_memorandum
 from .vacaciones import resumen
@@ -53,8 +53,10 @@ def ficha(request,pk):
     from decimal import Decimal
     descontado=sum((fila['dias'] or Decimal(0) for fila in visibles
                     if fila['estado']=='VIGENTE'),Decimal(0))
+    evidencias_ids = set(EvidenciaVacacion.objects.filter(movimiento_id__in=[fila['pk'] for fila in visibles])
+                         .values_list('movimiento_id', flat=True))
     return render(request,'control/vacaciones/ficha.html',dict(titulo=c.nombre,tipo='control_vacaciones',r=r,
-        filas_visibles=visibles,total_movimientos=len(movimientos),total_visible=descontado,filtrado=bool(seleccionados or tipo_movimiento),
+        filas_visibles=visibles,evidencias_ids=evidencias_ids,total_movimientos=len(movimientos),total_visible=descontado,filtrado=bool(seleccionados or tipo_movimiento),
         anios_movimientos=[(a,'Sin periodo' if a=='__sin__' else a) for a in anios],
         anios_seleccionados=seleccionados,tipo_movimiento=tipo_movimiento,
         tipos_movimientos=[(codigo,etiquetas.get(codigo,f'Código {codigo}')) for codigo in tipos]))

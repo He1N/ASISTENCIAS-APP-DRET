@@ -249,6 +249,14 @@ class MovimientoVacacion(Fechado):
         ordering = ['inicio', 'pk']
 
 
+class EvidenciaVacacion(models.Model):
+    movimiento = models.OneToOneField(MovimientoVacacion, on_delete=models.CASCADE, related_name='evidencia')
+    nombre = models.CharField(max_length=255)
+    tipo_mime = models.CharField(max_length=32)
+    contenido = models.BinaryField()
+    fecha = models.DateTimeField(auto_now_add=True)
+
+
 class EnlaceVacacion(Fechado):
     justificacion = models.OneToOneField(Justificacion, on_delete=models.PROTECT, related_name='enlace_vacacion')
     cuenta = models.ForeignKey(CuentaVacacion, null=True, blank=True, on_delete=models.PROTECT, related_name='enlaces')

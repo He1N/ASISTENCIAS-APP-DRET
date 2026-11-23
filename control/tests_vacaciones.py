@@ -356,7 +356,7 @@ class ControlVacacionesTests(TestCase):
         self.assertEqual(response.context['form']['cud'].value(), '')
         self.assertNotContains(response, 'DatabaseDefault')
         self.assertEqual(list(response.context['form'].fields),
-                         ['cuenta', 'periodo', 'fecha', 'cud', 'inicio', 'fin', 'dias', 'observaciones'])
+                         ['cuenta', 'periodo', 'fecha', 'cud', 'inicio', 'fin', 'dias', 'observaciones', 'token_alta'])
         data = {'cuenta': self.account.pk, 'periodo': '2026',
                 'inicio': '2026-11-19', 'fin': '2026-11-19', 'dias': '', 'cud': '00123'}
         self.assertEqual(self.client.post(url, {**data, 'fin': '2026-11-18'}).status_code, 200)
@@ -369,6 +369,42 @@ class ControlVacacionesTests(TestCase):
         self.assertContains(self.client.get(reverse('vacacion_ficha', args=[self.account.pk])), 'CUD 00123')
         self.assertEqual(self.client.post(url, {**data, 'dias': '0.5', 'cud': ''}).status_code, 302)
         self.assertTrue(MovimientoVacacion.objects.filter(dias=Decimal('0.5'), cud='').exists())
+
+    def test_imprimir_memorandum_guarda_una_vez_y_descarga_word_editable(self):
+        self.client.force_login(self.user)
+        self.account.nombre = 'PERSONA & FICTICIA'
+        self.account.save(update_fields=['nombre'])
+        url = reverse('vacacion_movimiento_nuevo', args=[self.account.pk])
+        alta = self.client.get(url)
+        self.assertContains(alta, 'Imprimir Memorándum')
+        datos = {
+            'cuenta': self.account.pk, 'periodo': '2026', 'cud': '03456',
+            'inicio': '2026-12-10', 'fin': '2026-12-10', 'dias': '0.5',
+            'token_alta': str(alta.context['form']['token_alta'].value()),
+            'imprimir_memorandum': '1',
+        }
+        invalida = self.client.post(url, {**datos, 'fin': '2026-12-09'})
+        self.assertContains(invalida, 'La fecha final es anterior al inicio.')
+        self.assertFalse(MovimientoVacacion.objects.exists())
+
+        with patch('django.utils.timezone.now', return_value=datetime(2026, 11, 23, 2, tzinfo=timezone.utc)):
+            for _ in range(2):
+                response = self.client.post(url, datos)
+                self.assertEqual(response.status_code, 200)
+                self.assertIn('.docx', response['Content-Disposition'])
+                self.assertEqual(response['Content-Type'],
+                                 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+                with ZipFile(BytesIO(response.content)) as archivo:
+                    doc = ET.fromstring(archivo.read('word/document.xml'))
+                from .vacaciones_word import w
+                texto = ''.join(n.text or '' for n in doc.iter(w('t')))
+                self.assertEqual(texto.count('PERSONA & FICTICIA'), 2)
+                self.assertEqual(texto.count('Calana, 22 de noviembre del 2026'), 2)
+                self.assertEqual(texto.count('10/12/2026 al 10/12/2026 (0,5 días)'), 2)
+                self.assertEqual(texto.count('CUD. N° 03456'), 2)
+                self.assertNotIn('{{', texto)
+        self.assertEqual(MovimientoVacacion.objects.count(), 1)
+        self.assertEqual(MovimientoVacacion.objects.get().dias, Decimal('0.5'))
 
     def test_saldo_y_observaciones_en_ambos_formatos_e_integrado(self):
         from .vacaciones_word import generar_docx,generar_integrado,anios_disponibles

@@ -2,6 +2,7 @@
 {% load static %}
 {% block vendor_css %}<link rel="stylesheet" href="{% static 'control/vacaciones_rango.css' %}">{% endblock %}
 {% block campos %}
+{{ form.token_alta }}{{ form.token_alta.errors }}
 <div class="campo{% if form.cuenta.errors %} con-error{% endif %}">{{ form.cuenta.as_field_group }}</div>
 <div class="campo{% if form.periodo.errors %} con-error{% endif %}">{{ form.periodo.as_field_group }}</div>
 <div class="campo{% if form.fecha.errors %} con-error{% endif %}">{{ form.fecha.as_field_group }}</div>
@@ -29,4 +30,6 @@
 <div class="campo{% if form.dias.errors %} con-error{% endif %}">{{ form.dias.as_field_group }}</div>
 <div class="campo{% if form.observaciones.errors %} con-error{% endif %}">{{ form.observaciones.as_field_group }}</div>
 {% endblock %}
+{% block acciones_adicionales %}<button type="submit" name="imprimir_memorandum" value="1"
+  class="secundario" title="Guardar el movimiento y descargar el Word">Imprimir Memorándum</button>{% endblock %}
 {% block scripts %}<script src="{% static 'control/vacaciones_rango.js' %}" defer></script>{% endblock %}

@@ -12,6 +12,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods, require_safe
 from .models import CuentaVacacion, MovimientoVacacion, EnlaceVacacion
 from .audit import registrar, snapshot
+from .memorandum import descargar_memorandum
 from .vacaciones import resumen
 from .vacaciones_forms import AltaMovimientoForm, CuentaForm, MovimientoForm
 
@@ -106,6 +107,7 @@ def formatos(request,pk):
 @permission_required('control.change_cuentavacacion',raise_exception=True)
 @require_http_methods(['GET','POST'])
 def editar(request,pk=None,movimiento=None,nuevo=False):
+    imprimir = nuevo and request.POST.get('imprimir_memorandum') == '1'
     with transaction.atomic():
         if pk is None and not request.user.has_perm('control.add_cuentavacacion'):
             from django.core.exceptions import PermissionDenied
@@ -128,6 +130,15 @@ def editar(request,pk=None,movimiento=None,nuevo=False):
                 form.add_error(None,'La ficha cambió mientras editaba. Recargue antes de guardar.')
             else:
                 changed=form.save(commit=False)
+                if nuevo and (token := form.cleaned_data['token_alta']):
+                    # Las solicitudes de la misma alta se serializan mediante el bloqueo de la cuenta.
+                    clave = f'alta:{request.user.pk}:{changed.cuenta_id}:{token.hex}'
+                    existente = MovimientoVacacion.objects.filter(cuenta=changed.cuenta, origen_clave=clave).first()
+                    if existente:
+                        if imprimir:
+                            return descargar_memorandum(existente)
+                        return redirect('vacacion_ficha', pk=existente.cuenta_id)
+                    changed.origen_clave = clave
                 if isinstance(changed,CuentaVacacion):
                     changed.asignaciones={str(y):str(form.cleaned_data[f'anio_{y}']) if form.cleaned_data.get(f'anio_{y}') is not None else None for y in range(2022,2031)}
                 changed.save()
@@ -142,6 +153,8 @@ def editar(request,pk=None,movimiento=None,nuevo=False):
                 saldo=resumen(affected)['pendiente']
                 if saldo<0:
                     messages.warning(request,f'Saldo negativo: {saldo} días. El consumo excede las asignaciones registradas en {-saldo} días.')
+                if imprimir:
+                    return descargar_memorandum(changed)
                 return redirect('vacacion_ficha',pk=affected.pk)
     template = 'control/vacaciones/movimiento_nuevo.html' if nuevo else 'control/formulario.html'
     encabezado = 'Agregar movimiento' if nuevo else 'Editar control de vacaciones'

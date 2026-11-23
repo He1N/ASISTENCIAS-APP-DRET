@@ -1,4 +1,5 @@
 from decimal import Decimal
+from uuid import uuid4
 from django import forms
 from .forms import EstiloForm
 from .models import CuentaVacacion, MovimientoVacacion
@@ -47,6 +48,7 @@ class CuentaForm(EstiloForm):
 
 
 class AltaMovimientoForm(EstiloForm):
+    token_alta = forms.UUIDField(widget=forms.HiddenInput, initial=uuid4, required=False)
     periodo = forms.ChoiceField(choices=[('', 'Seleccione un periodo')] +
                                 [(str(year), str(year)) for year in range(2024, 2027)])
 

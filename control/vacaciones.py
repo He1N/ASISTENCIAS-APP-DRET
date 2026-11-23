@@ -15,13 +15,18 @@ def cantidad_ley(movimiento):
 def saldo_ley276_anual(cuenta, anio):
     asignado = Decimal(3)
     usado = Decimal(0)
-    for movimiento in cuenta.movimientos.all():
-        if movimiento.codigo != '09' or movimiento.estado != 'VIGENTE':
+    permisos = []
+    for fila in detalle(cuenta):
+        if fila['codigo'] != '09':
             continue
-        fecha = movimiento.inicio or movimiento.fecha or movimiento.fin
-        if (fecha and fecha.year == anio) or (not fecha and movimiento.periodo.strip() == str(anio)):
-            usado += decimal(cantidad_ley(movimiento))
-    return dict(programado=asignado, usado=usado, pendiente=asignado-usado)
+        fecha = fila['inicio'] or fila['fin'] or fila['fecha']
+        descuento = Decimal(0)
+        if fila['estado'] == 'VIGENTE' and fecha and fecha.year == anio:
+            descuento = decimal(fila['dias_ley'])
+        fila['descontado'] = descuento
+        usado += descuento
+        permisos.append(fila)
+    return dict(programado=asignado, usado=usado, pendiente=asignado-usado, movimientos=permisos)
 
 
 def detalle(cuenta):

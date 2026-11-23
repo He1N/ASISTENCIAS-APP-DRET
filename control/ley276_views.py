@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.utils.http import content_disposition_header
 from .models import CuentaVacacion
 from .regimenes import normalizar_regimen
-from .vacaciones import resumen, saldo_ley276_anual
+from .vacaciones import saldo_ley276_anual
 from .exportacion_regimen import libro_agrupado
 
 
@@ -50,8 +50,12 @@ def lista(request):
 @permission_required('control.view_cuentavacacion',raise_exception=True)
 @require_safe
 def ficha(request,pk):
-    c=obtener(pk);r=resumen(c)
-    return render(request,'control/ley276/ficha.html',dict(titulo=c.nombre,tipo='ley276',r=r,movimientos=[m for m in r['filas'] if m['codigo']=='09']))
+    cuenta = obtener(pk)
+    anio = timezone.localdate().year
+    saldo = saldo_ley276_anual(cuenta, anio)
+    return render(request, 'control/ley276/ficha.html', dict(
+        titulo=cuenta.nombre, tipo='ley276', anio=anio, r=dict(cuenta=cuenta, ley_276=saldo),
+        movimientos=saldo['movimientos']))
 
 
 @never_cache
@@ -60,12 +64,14 @@ def ficha(request,pk):
 @require_safe
 def exportar(request,pk=None):
     q=request.GET.get('q','').strip()[:250]
-    records=[resumen(c) for c in ([obtener(pk,True)] if pk else cuentas(q,True))]
+    anio = timezone.localdate().year
+    records = [dict(cuenta=c, ley_276=saldo_ley276_anual(c, anio))
+               for c in ([obtener(pk, True)] if pk else cuentas(q, True))]
     summary=[[r['cuenta'].dni,r['cuenta'].nombre,r['ley_276']['programado'],r['ley_276']['usado'],r['ley_276']['pendiente']] for r in records]
-    details=[[r['cuenta'].dni,r['cuenta'].nombre,m['periodo'],m['fecha'],m['inicio'],m['fin'],m['dias_ley'],m['dias_ley'] if m['estado']=='VIGENTE' else 0,m['estado'],m['observaciones']] for r in records for m in r['filas'] if m['codigo']=='09']
+    details=[[r['cuenta'].dni,r['cuenta'].nombre,m['periodo'],m['fecha'],m['inicio'],m['fin'],m['dias_ley'],m['descontado'],m['estado'],m['observaciones']] for r in records for m in r['ley_276']['movimientos']]
     data=libro_agrupado([
-        dict(nombre='Resumen',titulo='LEY 276',regimen='DEC. LEG. 276',headers=['DNI','Nombres y apellidos','Días totales asignados','Días usados','Días restantes'],widths=[13,45,24,17,18],totales=[3,4,5],rows=summary),
-        dict(nombre='detalle',titulo='PERMISOS LEY 276',regimen='DEC. LEG. 276',headers=['DNI','Nombres y apellidos','Periodo','Fecha','Del','Al','Días de permiso','Descontado','Estado','Sustento / observación'],widths=[13,40,12,14,14,14,18,16,17,58],totales=[8],rows=details)])
+        dict(nombre='Resumen',titulo=f'LEY 276 · {anio}',regimen='DEC. LEG. 276',headers=['DNI','Nombres y apellidos','Días asignados','Días usados','Días restantes'],widths=[13,45,24,17,18],totales=[3,4,5],rows=summary),
+        dict(nombre='detalle',titulo='PERMISOS LEY 276',regimen='DEC. LEG. 276',headers=['DNI','Nombres y apellidos','Periodo','Fecha','Del','Al','Días de permiso',f'Descontado {anio}','Estado','Sustento / observación'],widths=[13,40,12,14,14,14,18,16,17,58],totales=[8],rows=details)])
     name='Ley_276'
     if pk:name+='_'+(re.sub(r'[^\w .-]','',records[0]['cuenta'].nombre).strip() or records[0]['cuenta'].dni)
     response=HttpResponse(data,content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')

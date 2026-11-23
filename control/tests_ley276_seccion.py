@@ -12,6 +12,9 @@ from .models import CuentaVacacion,MovimientoVacacion,HistorialCambio
 
 class Ley276SeccionTests(TestCase):
     def setUp(self):
+        reloj = patch('control.ley276_views.timezone.localdate', return_value=date(2026, 11, 23))
+        reloj.start()
+        self.addCleanup(reloj.stop)
         self.admin=get_user_model().objects.create_superuser('leyadmin','','prueba')
         self.client.force_login(self.admin)
         self.c=CuentaVacacion.objects.create(nombre='PERSONA LEY',dni='00000001',regimen_laboral='DEC.LEG.276',asignaciones={'2025':'30','2026':'30'})
@@ -36,9 +39,10 @@ class Ley276SeccionTests(TestCase):
         self.c.asignacion_ley276 = Decimal(12)
         self.c.save(update_fields=['asignacion_ley276'])
         for datos in [
-            dict(fecha=date(2025, 12, 31), permiso_ley=5),
+            dict(fecha=date(2025, 12, 31), inicio=date(2025, 7, 30), periodo='2026', permiso_ley=5),
             dict(fecha=date(2025, 12, 31), inicio=date(2026, 1, 1), periodo='2025', permiso_ley=2),
-            dict(periodo='2026', dias=Decimal('0.5')),
+            dict(periodo='2026', dias=7),
+            dict(fin=date(2026, 6, 10), dias=Decimal('0.5')),
             dict(fecha=date(2026, 12, 31), permiso_ley=4, estado='CANCELADO'),
             dict(fecha=date(2027, 1, 2), permiso_ley=1),
         ]:
@@ -56,12 +60,31 @@ class Ley276SeccionTests(TestCase):
                 self.assertEqual((saldo['programado'], saldo['usado'], saldo['pendiente']), esperado)
                 self.assertContains(respuesta, f'>{esperado[2]}</td>')
 
+    def test_ficha_y_excel_no_descuentan_permiso_de_2025_con_periodo_2026(self):
+        previo = MovimientoVacacion.objects.create(
+            cuenta=self.c, codigo='09', periodo='2026', fecha=date(2025, 12, 10),
+            inicio=date(2025, 7, 30), fin=date(2025, 7, 30), permiso_ley=1,
+            observaciones='PERMISO HISTÓRICO')
+        response = self.client.get(reverse('ley276_ficha', args=[self.c.pk]))
+        saldo = response.context['r']['ley_276']
+        self.assertEqual((saldo['programado'], saldo['usado'], saldo['pendiente']),
+                         (3, Decimal('1.5'), Decimal('1.5')))
+        self.assertContains(response, 'Descontado 2026')
+        self.assertEqual(next(m['descontado'] for m in response.context['movimientos'] if m['pk'] == previo.pk), 0)
+
+        response = self.client.get(reverse('ley276_exportar_individual', args=[self.c.pk]))
+        book = load_workbook(BytesIO(response.content), data_only=True)
+        self.assertEqual(book['detalle']['H4'].value, 0)
+        self.assertEqual(book['detalle']['J4'].value, 'PERMISO HISTÓRICO')
+        self.assertEqual(book['detalle']['H5'].value, 1.5)
+        self.assertEqual(book['Resumen']['D4'].value, 1.5)
+
     def test_excel_general_individual_filtrado_e_inactivos(self):
         for route,args in [('ley276_exportar',[]),('ley276_exportar_individual',[self.c.pk])]:
             response=self.client.get(reverse(route,args=args))
             book=load_workbook(BytesIO(response.content),data_only=True)
             self.assertEqual(book.sheetnames,['Resumen','detalle'])
-            self.assertEqual([book['Resumen'].cell(4,i).value for i in range(1,6)],['00000001','PERSONA LEY',6,1.5,4.5])
+            self.assertEqual([book['Resumen'].cell(4,i).value for i in range(1,6)],['00000001','PERSONA LEY',3,1.5,1.5])
             self.assertEqual(book['detalle']['H4'].value,1.5)
             self.assertEqual(book['detalle']['H5'].value,0)
             self.assertEqual(book['detalle']['H6'].value,1.5)

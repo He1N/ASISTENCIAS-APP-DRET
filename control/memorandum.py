@@ -10,13 +10,18 @@ from django.utils.http import content_disposition_header
 
 from .vacaciones_word import MONTHS, num
 
+PREFIJO_CUD = '202600310'
+
 
 def descargar_memorandum(movimiento):
     fecha = timezone.localdate(movimiento.created_at)
     unidad = 'día' if movimiento.dias == 1 else 'días'
+    cud = movimiento.cud or '...'
+    if not cud.startswith(PREFIJO_CUD):
+        cud = PREFIJO_CUD + cud
     variables = {
         'NOMBRE': movimiento.cuenta.nombre,
-        'CUD': movimiento.cud or '...',
+        'CUD': cud,
         'FECHA': f'{fecha.day} de {MONTHS[fecha.month-1].lower()} del {fecha.year}',
         'ANIO': str(fecha.year),
         'RANGO': f'{movimiento.inicio:%d/%m/%Y} al {movimiento.fin:%d/%m/%Y} ({num(movimiento.dias)} {unidad})',
